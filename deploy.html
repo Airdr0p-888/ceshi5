@@ -99,8 +99,47 @@
       <div class="hint">提示：每份 Mint 需要多少 BNB。输入小数即可，例如 0.1 表示 0.1 BNB。</div>
     </div>
     <div class="input-group">
-      <label>营销钱包地址</label>
-      <input type="text" id="p_marketing" placeholder="0x..." />
+      <label>营销钱包地址（留空则使用部署者地址）</label>
+      <input type="text" id="p_marketing" placeholder="留空默认部署者，或输入 0x..." />
+    </div>
+
+    <div style="background:#0d2818;border:1px solid #238636;border-radius:8px;padding:16px;margin:18px 0;">
+      <h3 style="color:#3fb950;font-size:0.95rem;margin:0 0 12px 0;">💰 税收配置</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="input-group" style="margin-bottom:0;">
+          <label>买入税 (%)</label>
+          <input type="number" id="p_buyTax" value="5" min="0" max="10" step="0.1" style="text-align:center;" />
+          <div class="hint">每笔买入扣除的代币比例（最大 10%）</div>
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label>卖出税 (%)</label>
+          <input type="number" id="p_sellTax" value="5" min="0" max="10" step="0.1" style="text-align:center;" />
+          <div class="hint">每笔卖出扣除的代币比例（最大 10%）</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background:#0d1f3c;border:1px solid #1f6feb;border-radius:8px;padding:16px;margin:18px 0;">
+      <h3 style="color:#58a6ff;font-size:0.95rem;margin:0 0 12px 0;">📊 税收分配比例（四项合计必须 100%）</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div class="input-group" style="margin-bottom:0;">
+          <label>营销 (%)</label>
+          <input type="number" id="p_taxMarketing" value="40" min="0" max="100" step="1" style="text-align:center;" />
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label>持币分红 (%)</label>
+          <input type="number" id="p_taxDiv" value="30" min="0" max="100" step="1" style="text-align:center;" />
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label>回流 LP (%)</label>
+          <input type="number" id="p_taxLp" value="20" min="0" max="100" step="1" style="text-align:center;" />
+        </div>
+        <div class="input-group" style="margin-bottom:0;">
+          <label>销毁 (%)</label>
+          <input type="number" id="p_taxBurn" value="10" min="0" max="100" step="1" style="text-align:center;" />
+        </div>
+      </div>
+      <div id="taxSumHint" style="margin-top:8px;font-size:0.8rem;color:#58a6ff;">合计：100% ✅</div>
     </div>
 
     <button class="btn-deploy" id="deployBtn" onclick="doDeploy()">部署合约</button>
@@ -183,13 +222,33 @@ async function doDeploy() {
   const totalSupplyInput = document.getElementById('p_totalSupply').value.trim();
   const maxMint = document.getElementById('p_maxMint').value.trim();
   const priceInput = document.getElementById('p_price').value.trim();
-  const marketing = document.getElementById('p_marketing').value.trim();
+  const marketing = document.getElementById('p_marketing').value.trim() || userAddr;
 
-  if (!name || !symbol || !totalSupplyInput || !maxMint || !priceInput || !marketing) {
-    showMsg('deployStatusMsg', '请填写所有参数', 'err'); return;
+  const buyTaxPct = parseFloat(document.getElementById('p_buyTax').value);
+  const sellTaxPct = parseFloat(document.getElementById('p_sellTax').value);
+  const taxMarketingPct = parseInt(document.getElementById('p_taxMarketing').value);
+  const taxDivPct = parseInt(document.getElementById('p_taxDiv').value);
+  const taxLpPct = parseInt(document.getElementById('p_taxLp').value);
+  const taxBurnPct = parseInt(document.getElementById('p_taxBurn').value);
+
+  if (!name || !symbol || !totalSupplyInput || !maxMint || !priceInput) {
+    showMsg('deployStatusMsg', '请填写所有基础参数', 'err'); return;
+  }
+  if (isNaN(buyTaxPct) || isNaN(sellTaxPct) || buyTaxPct < 0 || buyTaxPct > 10 || sellTaxPct < 0 || sellTaxPct > 10) {
+    showMsg('deployStatusMsg', '买卖税率须在 0~10% 之间', 'err'); return;
+  }
+  if (taxMarketingPct + taxDivPct + taxLpPct + taxBurnPct !== 100) {
+    showMsg('deployStatusMsg', '税收分配比例合计必须为 100%', 'err'); return;
   }
 
-  // 关键修复：代币总量（个）→ 自动乘以 10^18
+  // 百分比 → 合约内部单位（千分比，‰）
+  const buyTax = Math.round(buyTaxPct * 10);
+  const sellTax = Math.round(sellTaxPct * 10);
+  const taxMarketing = taxMarketingPct * 10;
+  const taxDiv = taxDivPct * 10;
+  const taxLp = taxLpPct * 10;
+  const taxBurn = taxBurnPct * 10;
+
   const totalSupply = ethers.parseUnits(totalSupplyInput, 18);
   const mintPrice = ethers.parseEther(priceInput);
 
@@ -199,7 +258,10 @@ async function doDeploy() {
 
   try {
     const factory = new ethers.ContractFactory(ABI, BYTECODE, signer);
-    const contract = await factory.deploy(name, symbol, totalSupply, maxMint, mintPrice, marketing);
+    const contract = await factory.deploy(
+      name, symbol, totalSupply, maxMint, mintPrice, marketing,
+      buyTax, sellTax, taxMarketing, taxDiv, taxLp, taxBurn
+    );
     const receipt = await contract.deploymentTransaction().wait();
     const addr = await contract.getAddress();
 
@@ -213,6 +275,18 @@ async function doDeploy() {
     showMsg('deployStatusMsg', '部署失败：' + (e.reason || e.message), 'err');
     btn.disabled = false;
   }
+}
+
+// 实时校验税收分配合计
+['p_taxMarketing','p_taxDiv','p_taxLp','p_taxBurn'].forEach(id => {
+  document.getElementById(id).addEventListener('input', updateTaxSum);
+});
+function updateTaxSum() {
+  const sum = ['p_taxMarketing','p_taxDiv','p_taxLp','p_taxBurn']
+    .reduce((s, id) => s + (parseInt(document.getElementById(id).value) || 0), 0);
+  const hint = document.getElementById('taxSumHint');
+  if (sum === 100) { hint.textContent = '合计：100% ✅'; hint.style.color = '#3fb950'; }
+  else { hint.textContent = '合计：' + sum + '% ⚠️（必须等于 100%）'; hint.style.color = '#f85149'; }
 }
 </script>
 </body>
