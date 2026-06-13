@@ -82,13 +82,13 @@
 
   <div id="mainPanel">
     <div class="tabs">
-      <div class="tab active" onclick="switchTab('dashboard')">📊 仪表盘</div>
-      <div class="tab" onclick="switchTab('mint')">🎯 Mint 配置</div>
-      <div class="tab" onclick="switchTab('open')">🚀 开盘控制</div>
-      <div class="tab" onclick="switchTab('tax')">💰 税收配置</div>
-      <div class="tab" onclick="switchTab('whitelist')">📋 白名单</div>
-      <div class="tab" onclick="switchTab('dividend')">🎁 分红</div>
-      <div class="tab" onclick="switchTab('risk')">🛡️ 风控</div>
+      <div class="tab active" id="tab-btn-dashboard" onclick="switchTab('dashboard')">📊 仪表盘</div>
+      <div class="tab" id="tab-btn-mint" onclick="switchTab('mint')">🎯 Mint 配置</div>
+      <div class="tab" id="tab-btn-open" onclick="switchTab('open')">🚀 开盘控制</div>
+      <div class="tab" id="tab-btn-tax" onclick="switchTab('tax')">💰 税收配置</div>
+      <div class="tab" id="tab-btn-whitelist" onclick="switchTab('whitelist')">📋 白名单</div>
+      <div class="tab" id="tab-btn-dividend" onclick="switchTab('dividend')">🎁 分红</div>
+      <div class="tab" id="tab-btn-risk" onclick="switchTab('risk')">🛡️ 风控</div>
     </div>
 
     <!-- 仪表盘 -->
@@ -1136,7 +1136,8 @@ async function loadContract() {
 function switchTab(name) {
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  event.target.classList.add('active');
+  const btn = document.getElementById('tab-btn-' + name);
+  if (btn) btn.classList.add('active');
   document.getElementById('tab-' + name).classList.add('active');
   if (name === 'dashboard') renderDashboard();
   if (name === 'mint') renderMintTab();
