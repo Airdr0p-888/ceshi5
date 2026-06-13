@@ -1157,6 +1157,7 @@ const ABI = [
   }
 ];
 let provider, signer, contract, userAddr, isOwner = false;
+let taxSwapTimer = null, taxSwapAutoEnabled = false, taxSwapIntervalSec = 300;
 
 // ========== 连接钱包 ==========
 async function connectWallet() {
@@ -1196,6 +1197,12 @@ async function loadContract() {
 
 // ========== Tab 切换 ==========
 function switchTab(name) {
+  // 离开税收 Tab 时暂停定时器，进入时恢复
+  if (name !== 'tax' && taxSwapTimer) {
+    clearInterval(taxSwapTimer);
+    taxSwapTimer = null;
+  }
+
   document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
   const btn = document.getElementById('tab-btn-' + name);
@@ -1204,7 +1211,7 @@ function switchTab(name) {
   if (name === 'dashboard') renderDashboard();
   if (name === 'mint') renderMintTab();
   if (name === 'open') renderOpenTab();
-  if (name === 'tax') renderTaxTab();
+  if (name === 'tax') { renderTaxTab(); if (taxSwapAutoEnabled && !taxSwapTimer) startAutoTaxSwap(); }
   if (name === 'whitelist') renderWhitelistTab();
   if (name === 'dividend') renderDividendTab();
   if (name === 'risk') renderRiskTab();
@@ -1338,11 +1345,26 @@ function renderTaxTab() {
       <div id="taxStatus" class="status-msg"></div>
     </div>
     <div class="card">
-      <h2>🔄 手动兑换税收代币</h2>
-      <p style="color:#8b949e;margin-bottom:12px;">合约积累的税收代币可手动触发兑换成 BNB 并分配</p>
+      <h2>🔄 税收代币兑换</h2>
+      <p style="color:#8b949e;margin-bottom:8px;">手动或自动将税收代币换成 BNB 并分配</p>
       <div id="taxTokenInfo" style="color:#f0883e;margin-bottom:8px;font-size:14px;">加载中...</div>
       <div id="poolStatus" style="margin-bottom:12px;font-size:13px;"></div>
-      <button class="btn-action primary" id="btnTaxSwap" onclick="triggerTaxSwap()">执行税收兑换</button>
+
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+        <button class="btn-action primary" id="btnTaxSwap" onclick="triggerTaxSwap()">⚡ 立即兑换</button>
+        <label style="display:flex;align-items:center;gap:6px;color:#e0e0e0;font-size:0.85rem;cursor:pointer;user-select:none;">
+          <input type="checkbox" id="autoTaxSwapToggle" onchange="toggleAutoTaxSwap()" style="accent-color:#3fb950;" />
+          自动兑换
+        </label>
+        <select id="autoTaxSwapInterval" onchange="changeTaxSwapInterval()" style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px 10px;color:#e0e0e0;font-size:0.85rem;">
+          <option value="60">每 1 分钟</option>
+          <option value="180">每 3 分钟</option>
+          <option value="300" selected>每 5 分钟</option>
+          <option value="900">每 15 分钟</option>
+          <option value="1800">每 30 分钟</option>
+        </select>
+        <span id="autoTaxSwapStatus" style="font-size:0.8rem;color:#8b949e;"></span>
+      </div>
       <div id="taxSwapStatus" class="status-msg"></div>
     </div>`;
   updateTaxTokenInfo();
@@ -1410,6 +1432,60 @@ async function updateTaxTokenInfo() {
       if (btnSwap) { btnSwap.disabled = false; btnSwap.style.opacity = '1'; btnSwap.style.cursor = 'pointer'; }
     }
   } catch(e) { document.getElementById('taxTokenInfo').textContent = '加载失败'; }
+}
+
+// ========== 自动税收兑换定时器 ==========
+function toggleAutoTaxSwap() {
+  const toggle = document.getElementById('autoTaxSwapToggle');
+  if (toggle.checked) {
+    startAutoTaxSwap();
+  } else {
+    stopAutoTaxSwap();
+  }
+}
+
+function changeTaxSwapInterval() {
+  taxSwapIntervalSec = parseInt(document.getElementById('autoTaxSwapInterval').value);
+  if (taxSwapAutoEnabled) {
+    // 重启定时器使新间隔生效
+    stopAutoTaxSwap();
+    startAutoTaxSwap();
+  }
+}
+
+function startAutoTaxSwap() {
+  taxSwapAutoEnabled = true;
+  document.getElementById('autoTaxSwapToggle').checked = true;
+  document.getElementById('autoTaxSwapStatus').textContent = '⏳ 自动兑换运行中（间隔 '+Math.floor(taxSwapIntervalSec/60)+' 分钟）';
+  document.getElementById('autoTaxSwapStatus').style.color = '#3fb950';
+
+  if (taxSwapTimer) clearInterval(taxSwapTimer);
+  taxSwapTimer = setInterval(async () => {
+    if (!contract || !taxSwapAutoEnabled) return;
+    try {
+      const [balance, threshold, pairAddr] = await Promise.all([
+        contract.balanceOf(contract.target),
+        contract.taxSwapThreshold(),
+        contract.pair()
+      ]);
+      if (pairAddr === '0x0000000000000000000000000000000000000000') return;
+      if (balance < threshold) return;
+
+      const tx = await contract.triggerTaxSwap();
+      await tx.wait();
+      updateTaxTokenInfo();
+    } catch(e) {
+      // 静默失败，下次重试
+    }
+  }, taxSwapIntervalSec * 1000);
+}
+
+function stopAutoTaxSwap() {
+  taxSwapAutoEnabled = false;
+  document.getElementById('autoTaxSwapToggle').checked = false;
+  document.getElementById('autoTaxSwapStatus').textContent = '⏸️ 自动兑换已关闭';
+  document.getElementById('autoTaxSwapStatus').style.color = '#8b949e';
+  if (taxSwapTimer) { clearInterval(taxSwapTimer); taxSwapTimer = null; }
 }
 
 // ========== 白名单 ==========
