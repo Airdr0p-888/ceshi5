@@ -237,6 +237,31 @@ const ABI = [
     "anonymous": false,
     "inputs": [
       {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "tokenIn",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "bnbOut",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "success",
+        "type": "bool"
+      }
+    ],
+    "name": "TaxSwapAttempted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
         "internalType": "address",
         "name": "from",
@@ -1314,9 +1339,10 @@ function renderTaxTab() {
     </div>
     <div class="card">
       <h2>🔄 手动兑换税收代币</h2>
-      <p style="color:#8b949e;margin-bottom:16px;">合约积累的税收代币可手动触发兑换成 BNB 并分配</p>
-      <div id="taxTokenInfo" style="color:#f0883e;margin-bottom:12px;font-size:14px;">加载中...</div>
-      <button class="btn-action primary" onclick="triggerTaxSwap()">执行税收兑换</button>
+      <p style="color:#8b949e;margin-bottom:12px;">合约积累的税收代币可手动触发兑换成 BNB 并分配</p>
+      <div id="taxTokenInfo" style="color:#f0883e;margin-bottom:8px;font-size:14px;">加载中...</div>
+      <div id="poolStatus" style="margin-bottom:12px;font-size:13px;"></div>
+      <button class="btn-action primary" id="btnTaxSwap" onclick="triggerTaxSwap()">执行税收兑换</button>
       <div id="taxSwapStatus" class="status-msg"></div>
     </div>`;
   updateTaxTokenInfo();
@@ -1362,12 +1388,27 @@ async function triggerTaxSwap() {
 async function updateTaxTokenInfo() {
   try {
     const ethers = await loadEthers();
-    const balance = await contract.balanceOf(contract.target);
-    const threshold = await contract.taxSwapThreshold();
+    const [balance, threshold, pairAddr] = await Promise.all([
+      contract.balanceOf(contract.target),
+      contract.taxSwapThreshold(),
+      contract.pair()
+    ]);
     const fmt = ethers.formatEther(balance);
     const tfmt = ethers.formatEther(threshold);
-    document.getElementById('taxTokenInfo').textContent = '合约持有代币：'+Number(fmt).toFixed(4)+' / 阈值：'+Number(tfmt).toFixed(4)+
-      (balance >= threshold ? ' ✅ 可执行兑换' : ' ⏳ 未达阈值');
+    document.getElementById('taxTokenInfo').textContent =
+      '合约持有代币：'+Number(fmt).toFixed(4)+' / 阈值：'+Number(tfmt).toFixed(4)+
+      (balance >= threshold ? ' ✅ 已达阈值' : ' ⏳ 未达阈值');
+
+    // 池子状态
+    const poolDiv = document.getElementById('poolStatus');
+    const btnSwap = document.getElementById('btnTaxSwap');
+    if (pairAddr === '0x0000000000000000000000000000000000000000') {
+      poolDiv.innerHTML = '<span style="color:#f85149;">⚠️ 交易对未创建，税收兑换不可用。<br>请先在「开盘管理」Tab 中创建交易对（开盘加池）。</span>';
+      if (btnSwap) { btnSwap.disabled = true; btnSwap.style.opacity = '0.5'; btnSwap.style.cursor = 'not-allowed'; }
+    } else {
+      poolDiv.innerHTML = '<span style="color:#3fb950;">✅ 交易对已创建：' + pairAddr.slice(0,6) + '...' + pairAddr.slice(-4) + '</span>';
+      if (btnSwap) { btnSwap.disabled = false; btnSwap.style.opacity = '1'; btnSwap.style.cursor = 'pointer'; }
+    }
   } catch(e) { document.getElementById('taxTokenInfo').textContent = '加载失败'; }
 }
 
