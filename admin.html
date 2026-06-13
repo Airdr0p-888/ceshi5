@@ -63,7 +63,7 @@
       <a href="mint.html">🪙 Mint</a>
     </div>
   </div>
-  <div class="wallet-bar">
+ <div class="wallet-bar">
     <span class="dot" id="walletDot"></span>
     <span id="walletAddr" style="font-size:0.85rem;color:#8b949e;">未连接</span>
     <button class="btn-connect" id="connectBtn" onclick="connectWallet()">连接钱包</button>
@@ -1314,7 +1314,7 @@ function renderTaxTab() {
     </div>
     <div class="card">
       <h2>🔄 手动兑换税收代币</h2>
-      <p style="color:#8b949e;margin-bottom:16px;">合约积累的税收代币需要手动触发兑换成 BNB 并分配（不会在交易中自动触发，避免被 PancakeSwap 重入锁阻止）</p>
+      <p style="color:#8b949e;margin-bottom:16px;">合约积累的税收代币可手动触发兑换成 BNB 并分配</p>
       <div id="taxTokenInfo" style="color:#f0883e;margin-bottom:12px;font-size:14px;">加载中...</div>
       <button class="btn-action primary" onclick="triggerTaxSwap()">执行税收兑换</button>
       <div id="taxSwapStatus" class="status-msg"></div>
@@ -1470,7 +1470,7 @@ function renderRiskTab() {
         <input id="rescueTokenAddr" type="text" placeholder="0x..." />
       </div>
       <div class="input-group">
-        <label>提取数量（原始单位，如 1000000 个 = 1 个含6位精度）</label>
+        <label>提取数量（原始单位）</label>
         <input id="rescueTokenAmt" type="text" placeholder="1000000000000000000" />
       </div>
       <button class="btn-action danger" onclick="rescueToken()">提取代币</button>
@@ -1494,7 +1494,7 @@ async function rescueToken() {
   const tx = await contract.rescueToken(addr, amt);
   await tx.wait();
   showMsg('rescueTokenStatus','✅ 代币提取成功','ok','tab-risk');
-  showMsg('riskStatus','','','tab-risk'); // clear old msg
+  showMsg('riskStatus','','','tab-risk');
 }
 
 // ========== 工具函数 ==========
