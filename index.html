@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FairMintBSC - 首页</title>
+<style>
+  * { box-sizing: border-box; margin:0; padding:0; }
+  body { font-family: 'Segoe UI', sans-serif; background: #0a0e17; color: #e0e0e0; min-height: 100vh; display:flex; flex-direction:column; align-items:center; }
+  header { width:100%; background: linear-gradient(135deg,#1a1f2e,#0d1117); border-bottom:1px solid #2d333b; padding:20px 0; text-align:center; }
+  header h1 { font-size:2rem; background:linear-gradient(90deg,#f0b90b,#f8d12f); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+  header p { color:#8b949e; margin-top:6px; font-size:0.95rem; }
+  .container { width:100%; max-width:900px; padding:40px 20px; flex:1; }
+  .section { margin-bottom:36px; }
+  .section h2 { color:#f0b90b; font-size:1.1rem; margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid #21262d; }
+  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
+  .card { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:24px; text-decoration:none; color:#e0e0e0; transition:all 0.2s; cursor:pointer; }
+  .card:hover { border-color:#f0b90b; transform:translateY(-2px); box-shadow:0 4px 20px rgba(240,185,11,0.1); }
+  .card-icon { font-size:2.2rem; margin-bottom:12px; }
+  .card-title { font-size:1.1rem; font-weight:600; margin-bottom:8px; color:#f0b90b; }
+  .card-desc { font-size:0.85rem; color:#8b949e; line-height:1.5; }
+  .badge { display:inline-block; font-size:0.7rem; padding:2px 8px; border-radius:10px; margin-left:8px; vertical-align:middle; }
+  .badge.deploy { background:#238636; color:#fff; }
+  .badge.owner { background:#da3633; color:#fff; }
+  .badge.user { background:#1f6feb; color:#fff; }
+  .network-bar { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; margin-bottom:30px; flex-wrap:wrap; gap:10px; }
+  .network-bar label { color:#8b949e; font-size:0.9rem; }
+  .network-bar select { background:#0d1117; color:#e0e0e0; border:1px solid #30363d; border-radius:6px; padding:6px 12px; font-size:0.9rem; }
+  .network-bar .status { display:flex; align-items:center; gap:6px; font-size:0.85rem; }
+  .dot { width:8px; height:8px; border-radius:50%; background:#3d444d; }
+  .dot.green { background:#3fb950; }
+  footer { width:100%; text-align:center; padding:20px; color:#484f58; font-size:0.8rem; border-top:1px solid #21262d; }
+  .steps { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:20px; font-size:0.9rem; line-height:2.2; }
+  .steps span { color:#f0b90b; font-weight:600; }
+</style>
+</head>
+<body>
+<header>
+  <h1>FairmintBSC</h1>
+  <p>去中心化公平铸造 · BSC 智能合约一键部署与管理</p>
+</header>
+<div class="container">
+  <div class="network-bar">
+    <div>
+      <label>网络：</label>
+      <select id="networkSelect" onchange="switchNetwork()">
+        <option value="97">BSC 测试网</option>
+        <option value="56">BSC 主网</option>
+      </select>
+    </div>
+    <div class="status">
+      <span class="dot" id="walletDot"></span>
+      <span id="walletStatus">未连接钱包</span>
+    </div>
+    <button id="connectBtn" onclick="connectWallet()" style="background:#f0b90b;border:none;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;cursor:pointer;">连接钱包</button>
+  </div>
+
+  <div class="section">
+    <h2>🚀 功能入口</h2>
+    <div class="cards">
+      <a class="card" href="deploy.html">
+        <div class="card-icon">📦</div>
+        <div class="card-title">部署合约 <span class="badge deploy">部署者</span></div>
+        <div class="card-desc">编译并部署 FairmintBSC 合约到 BSC 网络，填写代币参数一键上链。</div>
+      </a>
+      <a class="card" href="mint.html">
+        <div class="card-icon">🪙</div>
+        <div class="card-title">Mint 铸造 <span class="badge user">用户</span></div>
+        <div class="card-desc">连接钱包，参与 Mint 铸造获取代币。支持白名单查验。</div>
+      </a>
+      <a class="card" href="admin.html">
+        <div class="card-icon">⚙️</div>
+        <div class="card-title">管理面板 <span class="badge owner">Owner</span></div>
+        <div class="card-desc">Owner 专用：Mint 配置、开盘控制、税收设置、白名单管理、紧急风控。</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2>📖 使用流程</h2>
+    <div class="steps">
+      <div><span>①</span> 切换到 BSC 测试网，点击「部署合约」</div>
+      <div><span>②</span> 填写代币名称、符号、总量等参数，确认部署交易</div>
+      <div><span>③</span> 部署成功后在管理面板配置 Mint 参数、白名单等</div>
+      <div><span>④</span> 开启 Mint，用户即可在 Mint 页面参与铸造</div>
+      <div><span>⑤</span> Mint 结束后自动（或手动）开盘添加流动性</div>
+    </div>
+  </div>
+</div>
+<footer>FairmintBSC Frontend · 纯前端去中心化应用 · 无需后端</footer>
+
+<script>
+const NETWORKS = {
+  97: { chainId:'0x61', rpc:'https://data-seed-prebsc-1-s1.binance.org:8545', label:'BSC 测试网' },
+  56: { chainId:'0x38', rpc:'https://bsc-dataseed.binance.org', label:'BSC 主网' }
+};
+let currentAccount = null;
+
+async function connectWallet() {
+  if (!window.ethereum) { alert('请安装 MetaMask！'); return; }
+  try {
+    const accounts = await window.ethereum.request({ method:'eth_requestAccounts' });
+    currentAccount = accounts[0];
+    updateWalletUI();
+  } catch (e) { alert('连接失败：' + e.message); }
+}
+
+function updateWalletUI() {
+  const dot = document.getElementById('walletDot');
+  const status = document.getElementById('walletStatus');
+  const btn = document.getElementById('connectBtn');
+  if (currentAccount) {
+    dot.className = 'dot green';
+    status.textContent = currentAccount.slice(0,6) + '...' + currentAccount.slice(-4);
+    btn.textContent = '已连接'; btn.disabled = true;
+  }
+}
+
+async function switchNetwork() {
+  const net = Number(document.getElementById('networkSelect').value);
+  const info = NETWORKS[net];
+  try {
+    await window.ethereum.request({ method:'wallet_switchEthereumChain', params:[{ chainId:info.chainId }] });
+  } catch (e) {
+    if (e.code === 4902) {
+      try {
+        await window.ethereum.request({ method:'wallet_addEthereumChain', params:[{ chainId:info.chainId, rpcUrls:[info.rpc], chainName:info.label, nativeCurrency:{name:'BNB',symbol:'BNB',decimals:18} }] });
+      } catch (e2) { alert('添加网络失败：' + e2.message); }
+    }
+  }
+}
+
+if (window.ethereum) {
+  window.ethereum.on('accountsChanged', (accs) => { currentAccount = accs[0]||null; updateWalletUI(); });
+  window.ethereum.on('chainChanged', () => location.reload());
+}
+</script>
+</body>
+</html>
