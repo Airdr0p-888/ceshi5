@@ -922,6 +922,13 @@
   },
   {
     "inputs": [],
+    "name": "triggerTaxSwap",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "unpauseContract",
     "outputs": [],
     "stateMutability": "nonpayable",

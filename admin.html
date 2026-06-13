@@ -1033,6 +1033,13 @@ const ABI = [
   },
   {
     "inputs": [],
+    "name": "triggerTaxSwap",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "unpauseContract",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -1274,7 +1281,15 @@ function renderTaxTab() {
       <div class="input-group"><label>分红比例 ‰（自动=1000-其他）</label><input type="number" id="rateDiv" placeholder="300" disabled style="background:#21262d;cursor:not-allowed;" /></div>
       <button class="btn-action" onclick="setTaxRateSplit()">更新分配比例</button>
       <div id="taxStatus" class="status-msg"></div>
+    </div>
+    <div class="card">
+      <h2>🔄 手动兑换税收代币</h2>
+      <p style="color:#8b949e;margin-bottom:16px;">合约积累的税收代币需要手动触发兑换成 BNB 并分配（不会在交易中自动触发，避免被 PancakeSwap 重入锁阻止）</p>
+      <div id="taxTokenInfo" style="color:#f0883e;margin-bottom:12px;font-size:14px;">加载中...</div>
+      <button class="btn-action primary" onclick="triggerTaxSwap()">执行税收兑换</button>
+      <div id="taxSwapStatus" class="status-msg"></div>
     </div>`;
+  updateTaxTokenInfo();
 }
 
 async function setTaxConfig() {
@@ -1298,6 +1313,32 @@ async function setTaxRateSplit() {
   const tx = await contract.setTaxRateSplit(mar, burn, lp, div);
   await tx.wait();
   showMsg('taxStatus','✅ 分配比例已更新（分红='+div+'‰）','ok','tab-tax');
+}
+
+async function triggerTaxSwap() {
+  const ethers = await loadEthers();
+  if (!contract) return alert('请先加载合约');
+  try {
+    const tx = await contract.triggerTaxSwap();
+    showMsg('taxSwapStatus','⏳ 交易已提交，等待确认...','pending','tab-tax');
+    await tx.wait();
+    showMsg('taxSwapStatus','✅ 税收代币已兑换并分配完成！','ok','tab-tax');
+    updateTaxTokenInfo();
+  } catch(e) {
+    showMsg('taxSwapStatus','❌ 兑换失败：'+(e.reason||e.message),'error','tab-tax');
+  }
+}
+
+async function updateTaxTokenInfo() {
+  try {
+    const ethers = await loadEthers();
+    const balance = await contract.balanceOf(contract.target);
+    const threshold = await contract.taxSwapThreshold();
+    const fmt = ethers.formatEther(balance);
+    const tfmt = ethers.formatEther(threshold);
+    document.getElementById('taxTokenInfo').textContent = '合约持有代币：'+Number(fmt).toFixed(4)+' / 阈值：'+Number(tfmt).toFixed(4)+
+      (balance >= threshold ? ' ✅ 可执行兑换' : ' ⏳ 未达阈值');
+  } catch(e) { document.getElementById('taxTokenInfo').textContent = '加载失败'; }
 }
 
 // ========== 白名单 ==========
@@ -1390,6 +1431,20 @@ function renderRiskTab() {
       <p style="color:#f85149;font-size:0.85rem;margin-bottom:12px;">⚠️ 警告：仅限紧急情况，提取合约内闲置 BNB/代币</p>
       <button class="btn-action danger" onclick="rescueBNB()">提取合约 BNB（不含分红池）</button>
       <div id="riskStatus" class="status-msg"></div>
+    </div>
+    <div class="card">
+      <h2>💰 提取任意代币</h2>
+      <p style="color:#f0b90b;font-size:0.85rem;margin-bottom:12px;">提取误转入合约或合约持有的任意 ERC20 代币（含本币）</p>
+      <div class="input-group">
+        <label>代币合约地址</label>
+        <input id="rescueTokenAddr" type="text" placeholder="0x..." />
+      </div>
+      <div class="input-group">
+        <label>提取数量（原始单位，如 1000000 个 = 1 个含6位精度）</label>
+        <input id="rescueTokenAmt" type="text" placeholder="1000000000000000000" />
+      </div>
+      <button class="btn-action danger" onclick="rescueToken()">提取代币</button>
+      <div id="rescueTokenStatus" class="status-msg"></div>
     </div>`;
 }
 
@@ -1400,6 +1455,16 @@ async function rescueBNB() {
   const tx = await contract.rescueBNB();
   await tx.wait();
   showMsg('riskStatus','✅ 提取成功','ok','tab-risk');
+}
+async function rescueToken() {
+  const addr = document.getElementById('rescueTokenAddr').value.trim();
+  const amt = document.getElementById('rescueTokenAmt').value.trim();
+  if (!addr || !amt) { showMsg('rescueTokenStatus','请填写代币地址和数量','err','tab-risk'); return; }
+  if (!confirm('确认提取 ' + amt + ' 个代币？(' + addr + ')')) return;
+  const tx = await contract.rescueToken(addr, amt);
+  await tx.wait();
+  showMsg('rescueTokenStatus','✅ 代币提取成功','ok','tab-risk');
+  showMsg('riskStatus','','','tab-risk'); // clear old msg
 }
 
 // ========== 工具函数 ==========
