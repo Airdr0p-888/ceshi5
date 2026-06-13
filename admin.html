@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FairMintBSC - 管理员面板</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #0d1117; color: #c9d1d9; min-height: 100vh; }
+  .layout { display: flex; }
+  .sidebar { width: 240px; min-height: 100vh; background: #161b22; border-right: 1px solid #30363d; padding: 16px 0; position: sticky; top: 0; }
+  .sidebar-item { padding: 10px 20px; cursor: pointer; font-size: 14px; color: #8b949e; display: flex; align-items: center; gap: 8px; }
+  .sidebar-item:hover { color: #c9d1d9; background: #1f2937; }
+  .sidebar-item.active { color: #58a6ff; background: #1f2937; border-left: 3px solid #58a6ff; }
+  .main { flex: 1; padding: 24px; overflow-y: auto; }
+  .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+  h1 { font-size: 20px; color: #58a6ff; }
+  .wallet-badge { font-size: 12px; color: #8b949e; padding: 6px 12px; background: #161b22; border: 1px solid #30363d; border-radius: 20px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 20px; margin-bottom: 16px; }
+  .card-title { font-size: 15px; font-weight: 600; margin-bottom: 14px; color: #f0f6fc; }
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500; margin-right: 6px; margin-bottom: 6px; }
+  .btn-sm { padding: 5px 12px; font-size: 12px; }
+  .btn-primary { background: #238636; color: white; }
+  .btn-primary:hover { background: #2ea043; }
+  .btn-warn { background: #d29922; color: #0d1117; }
+  .btn-warn:hover { background: #e3b341; }
+  .btn-danger { background: #da3633; color: white; }
+  .btn-danger:hover { background: #f85149; }
+  .btn-outline { background: transparent; border: 1px solid #30363d; color: #c9d1d9; }
+  .btn-outline:hover { background: #1f2937; }
+  .form-group { margin-bottom: 10px; }
+  label { display: block; font-size: 12px; color: #8b949e; margin-bottom: 3px; }
+  input, select, textarea { width: 100%; padding: 7px 10px; background: #0d1117; border: 1px solid #30363d; border-radius: 6px; color: #c9d1d9; font-size: 13px; }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: #58a6ff; }
+  textarea { resize: vertical; min-height: 60px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .grid-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; }
+  .stat { text-align: center; }
+  .stat-value { font-size: 18px; font-weight: 700; color: #58a6ff; }
+  .stat-label { font-size: 11px; color: #8b949e; margin-top: 2px; }
+  .status-msg { font-size: 12px; padding: 8px 12px; border-radius: 4px; margin-top: 8px; display: none; }
+  .status-msg.ok { background: #23863620; color: #3fb950; border: 1px solid #238636; display: block; }
+  .status-msg.err { background: #da363320; color: #f85149; border: 1px solid #da3633; display: block; }
+  .status-msg.pending { background: #d2992220; color: #d29922; border: 1px solid #d29922; display: block; }
+  .section { display: none; }
+  .section.active { display: block; }
+  .input-group { display: flex; gap: 6px; }
+  .input-group input { flex: 1; }
+  .addr-short { color: #58a6ff; font-size: 13px; }
+</style>
+</head>
+<body>
+<div class="layout">
+  <div class="sidebar">
+    <div style="padding:16px 20px;font-weight:700;color:#f0f6fc;font-size:15px;">⚙️ 管理员面板</div>
+    <div class="sidebar-item active" onclick="switchTab('dashboard')">📊 仪表盘</div>
+    <div class="sidebar-item" onclick="switchTab('mint')">🎯 Mint 配置</div>
+    <div class="sidebar-item" onclick="switchTab('open')">🚀 开盘控制</div>
+    <div class="sidebar-item" onclick="switchTab('tax')">💰 税收配置</div>
+    <div class="sidebar-item" onclick="switchTab('whitelist')">📋 白名单</div>
+    <div class="sidebar-item" onclick="switchTab('dividend')">🎁 分红系统</div>
+    <div class="sidebar-item" onclick="switchTab('rescue')">🛡️ 紧急风控</div>
+    <div class="sidebar-item" onclick="switchTab('view')">🔍 链上查询</div>
+  </div>
+  <div class="main">
+    <div class="header">
+      <div><h1 id="pageTitle">📊 仪表盘</h1><div class="addr-short" id="contractAddrDisplay"></div></div>
+      <button class="btn btn-warn" id="connectBtn" onclick="connectWallet()">🔗 连接钱包</button>
+    </div>
+    <div id="ownerWarning" class="card" style="border-color:#da3633;display:none;">
+      <div style="text-align:center;"><span style="color:#f85149;font-size:16px;">⚠️ 你不是 Owner</span><br><small>当前钱包不是合约 Owner，只能查看不能修改</small></div>
+    </div>
+
+    <!-- 仪表盘 -->
+    <div id="tab-dashboard" class="section active">
+      <div class="grid-4">
+        <div class="card stat"><div class="stat-value" id="s-name">--</div><div class="stat-label">代币名称</div></div>
+        <div class="card stat"><div class="stat-value" id="s-symbol">--</div><div class="stat-label">代币符号</div></div>
+        <div class="card stat"><div class="stat-value" id="s-supply">--</div><div class="stat-label">总供应量</div></div>
+        <div class="card stat"><div class="stat-value" id="s-owner">--</div><div class="stat-label">Owner</div></div>
+      </div>
+      <div class="grid-3">
+        <div class="card stat"><div class="stat-value" id="s-minted">--</div><div class="stat-label">已铸造 / 最大</div></div>
+        <div class="card stat"><div class="stat-value" id="s-price">--</div><div class="stat-label">铸造价格 (BNB)</div></div>
+        <div class="card stat"><div class="stat-value" id="s-mode">--</div><div class="stat-label">开盘模式</div></div>
+        <div class="card stat"><div class="stat-value" id="s-pair">--</div><div class="stat-label">交易对</div></div>
+        <div class="card stat"><div class="stat-value" id="s-divpool">--</div><div class="stat-label">分红池 (BNB)</div></div>
+        <div class="card stat"><div class="stat-value" id="s-status">--</div><div class="stat-label">暂停状态</div></div>
+      </div>
+      <div class="card" style="text-align:center;">
+        <button class="btn btn-outline btn-sm" onclick="refreshDashboard()">🔄 刷新数据</button>
+        <span style="margin-left:10px;font-size:12px;color:#8b949e;">自动刷新已禁用，点击手动刷新</span>
+      </div>
+    </div>
+
+    <!-- Mint 配置 -->
+    <div id="tab-mint" class="section">
+      <div class="card">
+        <div class="card-title">🎯 Mint 参数修改</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>新铸造价格 (BNB)</label>
+            <input type="text" id="mint-price" placeholder="0.01">
+          </div>
+          <div class="form-group">
+            <label>新最大铸造份数 (不能低于已铸造数)</label>
+            <input type="number" id="mint-maxsupply" placeholder="1000">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="exec_write('setMintConfig',[toWei('mint-price'),id('mint-maxsupply').value])">💾 保存 Mint 配置</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 增发总量</div>
+        <div class="form-group">
+          <label>增发数量 (wei, 50% 会加入 LP 预留池)</label>
+          <input type="text" id="inc-supply" placeholder="1000000000000000000000">
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="exec_write('increaseTotalSupply',[id('inc-supply').value])">⚠️ 增发代币</button>
+      </div>
+    </div>
+
+    <!-- 开盘控制 -->
+    <div id="tab-open" class="section">
+      <div class="card">
+        <div class="card-title">🚀 开盘模式设置</div>
+        <div class="form-group">
+          <label>开盘模式</label>
+          <select id="open-mode">
+            <option value="0">AUTO — 全部 Mint 后自动开盘</option>
+            <option value="1">MANUAL — Owner 手动开盘</option>
+            <option value="2">TIMER — 定时开盘</option>
+          </select>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="exec_write('setOpenMode',[id('open-mode').value])">💾 设置开盘模式</button>
+      </div>
+      <div class="card">
+        <div class="card-title">⏰ 定时开盘 (仅 TIMER 模式)</div>
+        <div class="form-group">
+          <label>开盘时间戳 (Unix)</label>
+          <input type="number" id="open-time" placeholder="例如: 1750000000">
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="exec_write('setOpenTime',[id('open-time').value])">💾 设置时间</button>
+        <div style="margin-top:8px;">
+          <button class="btn btn-sm btn-outline" onclick="id('open-time').value=Math.floor(Date.now()/1000+3600)">📅 设为当前时间+1小时</button>
+          <button class="btn btn-sm btn-outline" onclick="id('open-time').value=Math.floor(Date.now()/1000+86400)">📅 设为当前时间+1天</button>
+        </div>
+      </div>
+      <div class="card" style="border-color:#d29922;">
+        <div class="card-title">🔧 手动开盘 (仅 MANUAL 模式，Mint 完成后)</div>
+        <button class="btn btn-warn" onclick="exec_write('manualOpenPool',[])">🚀 执行开盘 (加 LP + 开启交易)</button>
+      </div>
+    </div>
+
+    <!-- 税收配置 -->
+    <div id="tab-tax" class="section">
+      <div class="card">
+        <div class="card-title">📊 税率设置 (千分比, 最高 100 = 10%)</div>
+        <div class="grid-3">
+          <div class="form-group"><label>买入税 (千分)</label><input type="number" id="tax-buy" placeholder="50" min="0" max="100"></div>
+          <div class="form-group"><label>卖出税 (千分)</label><input type="number" id="tax-sell" placeholder="50" min="0" max="100"></div>
+          <div class="form-group"><label>税收归集阈值 (wei)</label><input type="text" id="tax-threshold" placeholder="0"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="exec_write('setTaxConfig',[id('tax-buy').value,id('tax-sell').value,id('tax-threshold').value])">💾 保存税率</button>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 税收分配比例 (总和必须 = 1000)</div>
+        <div class="grid-4">
+          <div class="form-group"><label>营销 (千分)</label><input type="number" id="rate-mar" placeholder="400"></div>
+          <div class="form-group"><label>销毁 (千分)</label><input type="number" id="rate-burn" placeholder="100"></div>
+          <div class="form-group"><label>LP回流 (千分)</label><input type="number" id="rate-lp" placeholder="200"></div>
+          <div class="form-group"><label>分红 (千分)</label><input type="number" id="rate-div" placeholder="300"></div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="exec_write('setTaxRateSplit',[id('rate-mar').value,id('rate-burn').value,id('rate-lp').value,id('rate-div').value])">💾 保存分配比例</button>
+      </div>
+      <div class="card">
+        <div class="card-title">👛 营销钱包</div>
+        <div class="form-group"><label>新营销钱包地址</label><input type="text" id="tax-wallet" placeholder="0x..."></div>
+        <button class="btn btn-primary btn-sm" onclick="exec_write('setMarketingWallet',[id('tax-wallet').value])">💾 保存钱包</button>
+      </div>
+    </div>
+
+    <!-- 白名单 -->
+    <div id="tab-whitelist" class="section">
+      <div class="card">
+        <div class="card-title">🔒 白名单开关</div>
+        <button class="btn btn-warn btn-sm" onclick="exec_write('setWhiteListSwitch',[true])">🔒 开启白名单</button>
+        <button class="btn btn-outline btn-sm" onclick="exec_write('setWhiteListSwitch',[false])">🔓 关闭白名单</button>
+      </div>
+      <div class="card">
+        <div class="card-title">➕ 批量添加白名单 (每行一个地址)</div>
+        <textarea id="w-addrs" placeholder="0x123...
+0x456..."></textarea>
+        <button class="btn btn-primary btn-sm" style="margin-top:8px;" onclick="addWhite_parsed()">💾 批量添加</button>
+      </div>
+      <div class="card">
+        <div class="card-title">➖ 移除白名单</div>
+        <div class="input-group">
+          <input type="text" id="w-remove" placeholder="0x...">
+          <button class="btn btn-danger btn-sm" onclick="exec_write('removeWhite',[id('w-remove').value])">移除</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔍 查询白名单</div>
+        <div class="input-group">
+          <input type="text" id="w-query" placeholder="0x...">
+          <button class="btn btn-outline btn-sm" onclick="queryWhite()">查询</button>
+        </div>
+        <div id="w-result" style="margin-top:8px;font-size:13px;"></div>
+      </div>
+    </div>
+
+    <!-- 分红系统 -->
+    <div id="tab-dividend" class="section">
+      <div class="card">
+        <div class="card-title">🎁 分红配置</div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>自动分红</label>
+            <select id="div-auto">
+              <option value="true">开启</option>
+              <option value="false">关闭</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>最低持币门槛 (wei)</label>
+            <input type="text" id="div-minhold" placeholder="0">
+          </div>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="exec_write('setDivConfig',[id('div-auto').value==='true',id('div-minhold').value])">💾 保存分红配置</button>
+      </div>
+    </div>
+
+    <!-- 紧急风控 -->
+    <div id="tab-rescue" class="section">
+      <div class="card" style="border-color:#da3633;">
+        <div class="card-title">🛑 合约暂停/恢复</div>
+        <button class="btn btn-danger" onclick="exec_write('pauseContract',[])">🛑 暂停合约</button>
+        <button class="btn btn-primary" onclick="exec_write('unpauseContract',[])">▶️ 恢复合约</button>
+        <div style="margin-top:8px;font-size:12px;color:#8b949e;">暂停后: 所有转账和 Mint 被禁止</div>
+      </div>
+      <div class="card" style="border-color:#d29922;">
+        <div class="card-title">💸 紧急提取 BNB（不含分红池）</div>
+        <button class="btn btn-danger" onclick="exec_write('rescueBNB',[])">⚠️ 提取闲置 BNB</button>
+      </div>
+      <div class="card" style="border-color:#d29922;">
+        <div class="card-title">🪙 紧急提取代币</div>
+        <div class="grid-2">
+          <div class="form-group"><label>代币地址</label><input type="text" id="rescue-token" placeholder="0x..."></div>
+          <div class="form-group"><label>数量 (wei)</label><input type="text" id="rescue-amount" placeholder="0"></div>
+        </div>
+        <button class="btn btn-danger btn-sm" onclick="exec_write('rescueToken',[id('rescue-token').value,id('rescue-amount').value])">⚠️ 提取代币</button>
+      </div>
+    </div>
+
+    <!-- 链上查询 -->
+    <div id="tab-view" class="section">
+      <div class="card">
+        <div class="card-title">🔍 地址查询</div>
+        <div class="grid-2">
+          <div class="input-group"><input type="text" id="v-addr" placeholder="查询地址"><button class="btn btn-outline btn-sm" onclick="queryAddress()">查询</button></div>
+        </div>
+      </div>
+      <div id="v-result" class="card" style="display:none;">
+        <div class="card-title">查询结果</div>
+        <div id="v-content" style="font-size:13px;"></div>
+      </div>
+    </div>
+
+    <!-- 全局状态提示 -->
+    <div id="globalStatus" class="status-msg"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/ethers@6.13.5/dist/ethers.umd.min.js"></script>
+<script>
+const ABI = [{"inputs":[{"internalType":"string","name":"name_","type":"string"},{"internalType":"string","name":"symbol_","type":"string"},{"internalType":"uint256","name":"initTotalSupply","type":"uint256"},{"internalType":"uint256","name":"_maxMintSupply","type":"uint256"},{"internalType":"uint256","name":"_mintPrice","type":"uint256"},{"internalType":"address","name":"_marketingWallet","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"previousOwner","type":"address"},{"indexed":true,"internalType":"address","name":"newOwner","type":"address"}],"name":"OwnershipTransferred","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Paused","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"account","type":"address"}],"name":"Unpaused","type":"event"},{"inputs":[],"name":"BURN_WALLET","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"ROUTER","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"WBNB","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address[]","name":"addrs","type":"address[]"}],"name":"addWhite","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"autoDivSend","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"buyTax","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"claimDividend","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"collectLpToken","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"collectMintBNB","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"divPoolBNB","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"addAmount","type":"uint256"}],"name":"increaseTotalSupply","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"manualOpenPool","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"marketingWallet","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"maxMintSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"minDivHoldAmount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"mint","outputs":[],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"mintPrice","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"mintedCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"openMode","outputs":[{"internalType":"enum FairMintBSC.OpenMode","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"openTime","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"owner","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"pair","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"pauseContract","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"paused","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"addr","type":"address"}],"name":"removeWhite","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"renounceOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"rescueBNB","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"token","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"rescueToken","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"router","outputs":[{"internalType":"contract IPancakeSwapRouter","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"sellTax","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bool","name":"autoSend","type":"bool"},{"internalType":"uint256","name":"minHold","type":"uint256"}],"name":"setDivConfig","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"wallet","type":"address"}],"name":"setMarketingWallet","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"newPrice","type":"uint256"},{"internalType":"uint256","name":"newMaxSupply","type":"uint256"}],"name":"setMintConfig","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"enum FairMintBSC.OpenMode","name":"mode","type":"uint8"}],"name":"setOpenMode","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"timestamp","type":"uint256"}],"name":"setOpenTime","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"_buy","type":"uint256"},{"internalType":"uint256","name":"_sell","type":"uint256"},{"internalType":"uint256","name":"threshold","type":"uint256"}],"name":"setTaxConfig","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"mar","type":"uint256"},{"internalType":"uint256","name":"burn","type":"uint256"},{"internalType":"uint256","name":"lp","type":"uint256"},{"internalType":"uint256","name":"div","type":"uint256"}],"name":"setTaxRateSplit","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bool","name":"open","type":"bool"}],"name":"setWhiteListSwitch","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"taxBurnRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"taxDivRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"taxLpRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"taxMarketingRate","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"taxSwapThreshold","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"timerOpenCheck","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"from","type":"address"},{"internalType":"address","name":"to","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"newOwner","type":"address"}],"name":"transferOwnership","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"unpauseContract","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"userClaimDebt","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"","type":"address"}],"name":"whiteList","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"whitelistOpen","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"stateMutability":"payable","type":"receive"}];
+let contract = null, signer = null, isOwner = false, contractAddr = '';
+let currentNet = 'testnet';
+
+// 工具函数
+const id = (s) => document.getElementById(s);
+const toWei = (sid) => {
+  const v = id(sid).value;
+  return v.includes('.') ? ethers.parseEther(v).toString() : v;
+};
+
+// 从 URL 参数获取合约地址
+window.onload = () => {
+  const p = new URLSearchParams(location.search);
+  contractAddr = p.get('addr') || localStorage.getItem('fairmint_addr_testnet') || '';
+  currentNet = p.get('net') || 'testnet';
+  id('contractAddrDisplay').textContent = contractAddr || '⚠️ 未指定合约地址';
+  if (!contractAddr) {
+    id('contractAddrDisplay').innerHTML = '<div class="form-group"><label>输入合约地址</label><div class="input-group"><input type="text" id="addrInput" placeholder="0x..."><button class="btn btn-primary btn-sm" onclick="loadContract()">加载合约</button></div></div>';
+  }
+};
+
+// 加载合约
+async function loadContract(addr) {
+  const a = addr || id('addrInput')?.value || contractAddr;
+  if (!a || !ethers.isAddress(a)) { alert('输入有效合约地址'); return; }
+  contractAddr = a;
+  id('contractAddrDisplay').textContent = a;
+  localStorage.setItem('fairmint_addr_'+currentNet, a);
+  await connectWallet();
+}
+
+// 钱包连接
+async function connectWallet() {
+  if (!window.ethereum) { alert('请安装 MetaMask!'); return; }
+  try {
+    const provider = new ethers.BrowserProvider(window.ethereum);
+    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    signer = await provider.getSigner();
+    const userAddr = await signer.getAddress();
+    id('connectBtn').textContent = '✅ ' + userAddr.slice(0,6) + '...' + userAddr.slice(-4);
+
+    if (contractAddr) {
+      contract = new ethers.Contract(contractAddr, ABI, signer);
+      try {
+        const owner = await contract.owner();
+        isOwner = (owner.toLowerCase() === userAddr.toLowerCase());
+        id('ownerWarning').style.display = isOwner ? 'none' : 'block';
+      } catch(e) {
+        isOwner = false;
+      }
+      refreshDashboard();
+      // 预填当前值
+      loadCurrentConfig();
+    }
+  } catch(err) {
+    alert('连接失败: ' + err.message);
+  }
+}
+
+// 刷新仪表盘
+async function refreshDashboard() {
+  if (!contract) return;
+  const fmtBNB = (v) => (Number(ethers.formatEther(v)).toFixed(4)) + ' BNB';
+  const fmtNum = (v) => Number(v).toLocaleString();
+  try {
+    const modes = ['AUTO','MANUAL','TIMER'];
+    const [[name,symbol,total,mintCount,maxMint,mintPrice,mode,divPool,pairAddr,ownerAddr,paused]]
+      = await Promise.all([
+        Promise.all([
+          contract.name(), contract.symbol(),
+          contract.totalSupply().then(v=>ethers.formatEther(v)+' '),
+          contract.mintedCount(), contract.maxMintSupply(),
+          contract.mintPrice().then(fmtBNB),
+          contract.openMode(), contract.divPoolBNB().then(fmtBNB),
+          contract.pair().then(v=>v==='0x0000000000000000000000000000000000000000'?'未创建':v.slice(0,10)+'...'),
+          contract.owner().then(v=>v.slice(0,8)+'...'),
+          contract.paused()
+        ])
+      ]);
+    id('s-name').textContent=name; id('s-symbol').textContent=symbol;
+    id('s-supply').textContent=total; id('s-minted').textContent=fmtNum(mintCount)+' / '+fmtNum(maxMint);
+    id('s-price').textContent=mintPrice; id('s-mode').textContent=modes[Number(mode)];
+    id('s-pair').textContent=pairAddr; id('s-divpool').textContent=divPool;
+    id('s-owner').textContent=ownerAddr; id('s-status').textContent=paused?'🔴 已暂停':'🟢 正常';
+    id('s-status').style.color=paused?'#f85149':'#3fb950';
+  } catch(e) { console.error(e); }
+}
+
+// 预填当前配置
+async function loadCurrentConfig() {
+  if (!contract) return;
+  try {
+    const vals = await Promise.all([
+      contract.mintPrice(), contract.maxMintSupply(), contract.openMode(),
+      contract.openTime(), contract.buyTax(), contract.sellTax(),
+      contract.taxSwapThreshold(), contract.taxMarketingRate(),
+      contract.taxBurnRate(), contract.taxLpRate(), contract.taxDivRate(),
+      contract.marketingWallet(), contract.autoDivSend(), contract.minDivHoldAmount(),
+      contract.whitelistOpen()
+    ]);
+    id('mint-price').value = ethers.formatEther(vals[0]);
+    id('mint-maxsupply').value = vals[1];
+    id('open-mode').value = vals[2];
+    id('open-time').value = vals[3];
+    id('tax-buy').value = vals[4]; id('tax-sell').value = vals[5];
+    id('tax-threshold').value = vals[6];
+    id('rate-mar').value = vals[7]; id('rate-burn').value = vals[8];
+    id('rate-lp').value = vals[9]; id('rate-div').value = vals[10];
+    id('tax-wallet').value = vals[11];
+    id('div-auto').value = vals[12] ? 'true' : 'false';
+    id('div-minhold').value = vals[13];
+  } catch(e) {}
+}
+
+// 执行写操作
+async function exec_write(fn, args) {
+  if (!contract) return alert('先连接钱包并加载合约');
+  if (!isOwner) return alert('只有 Owner 能执行此操作');
+  showStatus('⏳ 执行中，请在 MetaMask 确认...', 'pending');
+  try {
+    let tx;
+    if (fn === 'setMintConfig') {
+      tx = await contract[fn](args[0], args[1]);
+    } else if (fn === 'setOpenTime' || fn === 'setOpenMode') {
+      tx = await contract[fn](args[0]);
+    } else {
+      tx = await contract[fn](...args);
+    }
+    showStatus('⏳ 等待确认...', 'pending');
+    await tx.wait();
+    showStatus('✅ 操作成功! Tx: ' + tx.hash, 'ok');
+    refreshDashboard(); loadCurrentConfig();
+  } catch(err) {
+    showStatus('❌ ' + (err.reason||err.message), 'err');
+  }
+}
+
+// 批量添加白名单
+async function addWhite_parsed() {
+  const text = id('w-addrs').value.trim();
+  if (!text) return;
+  const addrs = text.split('\n').map(s=>s.trim()).filter(s=>ethers.isAddress(s));
+  if (addrs.length === 0) return alert('未找到有效地址');
+  await exec_write('addWhite', [addrs]);
+}
+
+// 查询白名单
+async function queryWhite() {
+  if (!contract) return;
+  const addr = id('w-query').value.trim();
+  if (!ethers.isAddress(addr)) { id('w-result').innerHTML = '<span class="error">无效地址</span>'; return; }
+  const inList = await contract.whiteList(addr);
+  id('w-result').innerHTML = inList ? '<span class="success">✅ 在白名单中</span>' : '<span style="color:#8b949e;">❌ 不在白名单中</span>';
+}
+
+// 查询任意地址
+async function queryAddress() {
+  if (!contract) return;
+  const addr = id('v-addr').value.trim();
+  if (!ethers.isAddress(addr)) return;
+  try {
+    const [bal, wl, debt] = await Promise.all([
+      contract.balanceOf(addr),
+      contract.whiteList(addr),
+      contract.userClaimDebt(addr)
+    ]);
+    id('v-result').style.display = 'block';
+    id('v-content').innerHTML =
+      '<div class="info-row"><span class="info-label">余额</span><span class="info-value">'+ethers.formatEther(bal)+'</span></div>'+
+      '<div class="info-row"><span class="info-label">白名单</span><span class="info-value">'+(wl?'✅ 是':'❌ 否')+'</span></div>'+
+      '<div class="info-row"><span class="info-label">分红债务</span><span class="info-value">'+ethers.formatEther(debt)+' BNB</span></div>';
+  } catch(e) { id('v-content').innerHTML = '<span class="error">'+e.message+'</span>'; }
+}
+
+// 标签切换
+function switchTab(tab) {
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(s=>s.classList.remove('active'));
+  id('tab-'+tab).classList.add('active');
+  const titles={dashboard:'📊 仪表盘',mint:'🎯 Mint 配置',open:'🚀 开盘控制',tax:'💰 税收配置',whitelist:'📋 白名单',dividend:'🎁 分红系统',rescue:'🛡️ 紧急风控',view:'🔍 链上查询'};
+  id('pageTitle').textContent = titles[tab];
+  // 激活侧边栏
+  document.querySelectorAll('.sidebar-item').forEach(item => {
+    if (item.onclick && item.onclick.toString().includes("'"+tab+"'")) item.classList.add('active');
+  });
+  if (tab === 'dashboard') refreshDashboard();
+  if (tab !== 'dashboard') loadCurrentConfig();
+}
+
+// 状态提示
+function showStatus(msg, type) {
+  const el = id('globalStatus');
+  el.textContent = msg; el.className = 'status-msg '+type;
+  setTimeout(() => { if(el.textContent===msg) { el.className='status-msg'; el.textContent=''; } }, 8000);
+}
+</script>
+</body>
+</html>
