@@ -1667,6 +1667,15 @@ function loadEthers() {
 if (window.ethereum) {
   window.ethereum.on('accountsChanged', (accs) => { userAddr = accs[0]||null; if(contract) loadContract(); });
 }
+
+// ===== 从 URL 参数自动填入合约地址 =====
+(function autoFillFromUrl() {
+  const p = new URLSearchParams(location.search);
+  const addr = p.get('contract');
+  if (addr && addr.startsWith('0x')) {
+    document.getElementById('contractAddr').value = addr;
+  }
+})();
 </script>
 </body>
 </html>

@@ -56,6 +56,14 @@
   </div>
 
   <div class="section">
+    <h2>📋 我的合约</h2>
+    <div class="network-bar" style="margin-bottom:16px;">
+      <input type="text" id="contractAddrInput" placeholder="输入你的合约地址 0x..." oninput="saveContractAddr()" style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 14px;color:#e0e0e0;font-size:0.9rem;min-width:200px;" />
+    </div>
+    <p style="color:#8b949e;font-size:0.8rem;margin-bottom:10px;">输入后，下方入口会自动带上合约地址，打开即用</p>
+  </div>
+
+  <div class="section">
     <h2>🚀 功能入口</h2>
     <div class="cards">
       <a class="card" href="deploy.html">
@@ -63,12 +71,12 @@
         <div class="card-title">部署合约 <span class="badge deploy">部署者</span></div>
         <div class="card-desc">编译并部署 FairmintBSC 合约到 BSC 网络，填写代币参数一键上链。</div>
       </a>
-      <a class="card" href="mint.html">
+      <a class="card" id="cardMint" href="mint.html">
         <div class="card-icon">🪙</div>
         <div class="card-title">Mint 铸造 <span class="badge user">用户</span></div>
         <div class="card-desc">连接钱包，参与 Mint 铸造获取代币。支持白名单查验。</div>
       </a>
-      <a class="card" href="admin.html">
+      <a class="card" id="cardAdmin" href="admin.html">
         <div class="card-icon">⚙️</div>
         <div class="card-title">管理面板 <span class="badge owner">Owner</span></div>
         <div class="card-desc">Owner 专用：Mint 配置、开盘控制、税收设置、白名单管理、紧急风控。</div>
@@ -134,6 +142,31 @@ if (window.ethereum) {
   window.ethereum.on('accountsChanged', (accs) => { currentAccount = accs[0]||null; updateWalletUI(); });
   window.ethereum.on('chainChanged', () => location.reload());
 }
+
+// ===== 合约地址持久化 + 页面跳转带参数 =====
+const CONTRACT_KEY = 'fairmint_contract_addr';
+
+function saveContractAddr() {
+  const addr = document.getElementById('contractAddrInput').value.trim();
+  if (addr) localStorage.setItem(CONTRACT_KEY, addr);
+  updatePageLinks();
+}
+
+function updatePageLinks() {
+  const addr = document.getElementById('contractAddrInput').value.trim() || localStorage.getItem(CONTRACT_KEY) || '';
+  const q = addr ? '?contract=' + encodeURIComponent(addr) : '';
+  document.getElementById('cardMint').href = 'mint.html' + q;
+  document.getElementById('cardAdmin').href = 'admin.html' + q;
+}
+
+// 页面加载时恢复
+(function initContractAddr() {
+  const saved = localStorage.getItem(CONTRACT_KEY);
+  if (saved) {
+    document.getElementById('contractAddrInput').value = saved;
+    updatePageLinks();
+  }
+})();
 </script>
 </body>
 </html>

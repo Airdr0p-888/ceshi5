@@ -1168,13 +1168,15 @@ async function loadContract() {
       contract.whitelistOpen()
     ]);
 
+    const mintEnded = minted >= maxSupply;
+
     document.getElementById('infoName').textContent = name + ' (' + symbol + ')';
     document.getElementById('infoMinted').textContent = minted.toString() + ' / ' + maxSupply.toString();
     document.getElementById('infoPrice').textContent = ethers.formatEther(price) + ' BNB';
-    document.getElementById('infoPaused').textContent = paused ? '⏸️ 已暂停' : '✅ 进行中';
+    document.getElementById('infoPaused').textContent = mintEnded ? '🛑 Mint 已结束' : (paused ? '⏸️ 已暂停' : '✅ 进行中');
     mintPriceWei = price.toString();
 
-    if (wlOpen) {
+    if (wlOpen && !mintEnded) {
       const isWL = await contract.whiteList(userAddr || await signer.getAddress());
       const wlDiv = document.getElementById('wlCheck');
       wlDiv.style.display = 'block';
@@ -1182,15 +1184,22 @@ async function loadContract() {
     }
 
     document.getElementById('contractInfo').style.display = 'block';
-    document.getElementById('mintCard').classList.remove('hidden');
-    document.getElementById('mintAmount').value = ethers.formatEther(price) + ' BNB';
 
-    const totalSupply = await contract.totalSupply();
-    const perMint = totalSupply / maxSupply;
-    const userGet = perMint / 2n;
-    document.getElementById('willGet').textContent = ethers.formatEther(userGet) + ' ' + symbol;
+    if (mintEnded) {
+      // Mint 已结束：隐藏铸造卡片，显示结束提示
+      document.getElementById('mintCard').classList.add('hidden');
+      showMsg('mintStatus','🛑 Mint 已全部铸造完毕，暂不支持新铸造。<br>可在 PancakeSwap 上交易代币。','info');
+    } else {
+      document.getElementById('mintCard').classList.remove('hidden');
+      document.getElementById('mintAmount').value = ethers.formatEther(price) + ' BNB';
 
-    showMsg('mintStatus','合约加载成功 ✓','ok');
+      const totalSupply = await contract.totalSupply();
+      const perMint = totalSupply / maxSupply;
+      const userGet = perMint / 2n;
+      document.getElementById('willGet').textContent = ethers.formatEther(userGet) + ' ' + symbol;
+
+      showMsg('mintStatus','合约加载成功 ✓','ok');
+    }
   } catch (e) {
     showMsg('mintStatus','加载失败：' + (e.reason||e.message),'err');
   }
@@ -1235,6 +1244,22 @@ function loadEthers() {
 if (window.ethereum) {
   window.ethereum.on('accountsChanged', () => location.reload());
 }
+
+// ===== 从 URL 参数自动加载合约 =====
+(function autoLoadFromUrl() {
+  const p = new URLSearchParams(location.search);
+  const addr = p.get('contract');
+  if (addr && addr.startsWith('0x')) {
+    document.getElementById('contractAddr').value = addr;
+    // 等钱包连接好后再自动加载（延迟一下让 ethers 加载）
+    setTimeout(() => {
+      if (window.ethereum && window.ethereum.selectedAddress) {
+        userAddr = window.ethereum.selectedAddress;
+        loadContract();
+      }
+    }, 800);
+  }
+})();
 </script>
 </body>
 </html>
