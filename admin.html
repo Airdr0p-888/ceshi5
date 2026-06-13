@@ -1530,30 +1530,61 @@ async function addWhitelist() {
 }
 
 // ========== 分红 ==========
-function renderDividendTab() {
-  document.getElementById('tab-dividend').innerHTML = `
-    <div class="card">
-      <h2>🎁 分红配置</h2>
-      <div style="margin-bottom:12px;">
-        <label style="color:#8b949e;font-size:0.85rem;">自动分红</label>
-        <div style="margin-top:6px;">
-          <button class="btn-small" onclick="setAutoDiv(true)" style="background:#238636;color:#fff;margin-right:8px;">开启</button>
-          <button class="btn-small" onclick="setAutoDiv(false)" style="background:#21262d;color:#e0e0e0;border:1px solid #30363d;">关闭</button>
-        </div>
+async function renderDividendTab() {
+  document.getElementById('tab-dividend').innerHTML = '<p style="color:#8b949e;">加载中...</p>';
+  try {
+    const ethers = await loadEthers();
+    const [autoDiv, minHold, divPool, totalSupply, pairAddr, burnAddr] = await Promise.all([
+      contract.autoDivSend(),
+      contract.minDivHoldAmount(),
+      contract.divPoolBNB(),
+      contract.totalSupply(),
+      contract.pair(),
+      contract.BURN_WALLET()
+    ]);
+    const circ = totalSupply - (await contract.balanceOf(pairAddr)) - (await contract.balanceOf(burnAddr));
+    const minHoldFmt = ethers.formatEther(minHold);
+    const circFmt = ethers.formatEther(circ);
+    const divPoolFmt = ethers.formatEther(divPool);
+    const autoStr = autoDiv ? '<span style="color:#3fb950;">✅ 自动分红已开启</span>' : '<span style="color:#f0883e;">⚠️ 自动分红已关闭（需手动领取）</span>';
+    const autoDivHint = autoDiv
+      ? '每次转账时自动向交易双方派发分红 BNB'
+      : '关闭时用户需在 Mint 页面手动调用 claimDividend() 领取分红';
+
+    document.getElementById('tab-dividend').innerHTML = `
+      <div class="card">
+        <h2>🎁 分红状态</h2>
+        <div class="row"><span class="label">分红池 BNB</span><span class="value">${Number(divPoolFmt).toFixed(6)} BNB</span></div>
+        <div class="row"><span class="label">流通量（不含池子+黑洞）</span><span class="value">${Number(circFmt).toFixed(4)}</span></div>
+        <div class="row"><span class="label">最低持币门槛</span><span class="value">${Number(minHoldFmt).toFixed(4)}</span></div>
+        <div class="row"><span class="label">自动分红</span><span class="value">${autoStr}</span></div>
+        <div style="color:#8b949e;font-size:0.8rem;margin-top:4px;">${autoDivHint}</div>
       </div>
-      <div class="input-group"><label>最低持币分红门槛（代币）</label><input type="text" id="minHoldInput" placeholder="1000000000000000000" /></div>
-      <button class="btn-action" onclick="setDivConfig()">更新分红配置</button>
-      <hr style="border-color:#21262d;margin:16px 0;" />
-      <button class="btn-action primary" onclick="claimDiv()">领取我的分红</button>
-      <div id="divStatus" class="status-msg"></div>
-    </div>`;
+      <div class="card">
+        <h2>⚙️ 分红配置</h2>
+        <div style="margin-bottom:12px;">
+          <label style="color:#8b949e;font-size:0.85rem;">自动分红开关</label>
+          <div style="margin-top:6px;">
+            <button class="btn-small" onclick="setAutoDiv(true)" style="background:#238636;color:#fff;margin-right:8px;">开启自动</button>
+            <button class="btn-small" onclick="setAutoDiv(false)" style="background:#21262d;color:#e0e0e0;border:1px solid #30363d;">关闭自动</button>
+          </div>
+        </div>
+        <div class="input-group"><label>最低持币分红门槛（代币单位）</label><input type="text" id="minHoldInput" value="${minHold.toString()}" /></div>
+        <button class="btn-action" onclick="setDivConfig()">更新分红配置</button>
+        <hr style="border-color:#21262d;margin:16px 0;" />
+        <button class="btn-action primary" onclick="claimDiv()">🎁 领取我的分红</button>
+        <div id="divStatus" class="status-msg"></div>
+      </div>`;
+  } catch (e) {
+    document.getElementById('tab-dividend').innerHTML = '<p style="color:#f85149;">加载失败：' + e.message + '</p>';
+  }
 }
 
 async function setAutoDiv(auto) {
   const ethers = await loadEthers();
   const minHold = document.getElementById('minHoldInput').value;
-  await contract.setDivConfig(auto, minHold ? ethers.parseEther(minHold) : 0);
-  showMsg('divStatus','✅ 分红配置已更新','ok','tab-dividend');
+  await contract.setDivConfig(auto, minHold ? minHold : 0);
+  renderDividendTab();
 }
 
 async function claimDiv() {
