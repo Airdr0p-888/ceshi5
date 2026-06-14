@@ -3,169 +3,326 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FairMintBSC - 首页</title>
+<title>Moda Fair Mint — BSC 发射平台</title>
+
+<script src="js/config.js"></script>
+<script src="js/abi.js"></script>
+<script src="js/web3utils.js"></script>
+<script src="js/web3compat.js"></script>
 <style>
-  * { box-sizing: border-box; margin:0; padding:0; }
-  body { font-family: 'Segoe UI', sans-serif; background: #0a0e17; color: #e0e0e0; min-height: 100vh; display:flex; flex-direction:column; align-items:center; }
-  header { width:100%; background: linear-gradient(135deg,#1a1f2e,#0d1117); border-bottom:1px solid #2d333b; padding:20px 0; text-align:center; }
-  header h1 { font-size:2rem; background:linear-gradient(90deg,#f0b90b,#f8d12f); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-  header p { color:#8b949e; margin-top:6px; font-size:0.95rem; }
-  .container { width:100%; max-width:900px; padding:40px 20px; flex:1; }
-  .section { margin-bottom:36px; }
-  .section h2 { color:#f0b90b; font-size:1.1rem; margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid #21262d; }
-  .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(240px,1fr)); gap:16px; }
-  .card { background:#161b22; border:1px solid #30363d; border-radius:12px; padding:24px; text-decoration:none; color:#e0e0e0; transition:all 0.2s; cursor:pointer; }
-  .card:hover { border-color:#f0b90b; transform:translateY(-2px); box-shadow:0 4px 20px rgba(240,185,11,0.1); }
-  .card-icon { font-size:2.2rem; margin-bottom:12px; }
-  .card-title { font-size:1.1rem; font-weight:600; margin-bottom:8px; color:#f0b90b; }
-  .card-desc { font-size:0.85rem; color:#8b949e; line-height:1.5; }
-  .badge { display:inline-block; font-size:0.7rem; padding:2px 8px; border-radius:10px; margin-left:8px; vertical-align:middle; }
-  .badge.deploy { background:#238636; color:#fff; }
-  .badge.owner { background:#da3633; color:#fff; }
-  .badge.user { background:#1f6feb; color:#fff; }
-  .network-bar { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:14px 20px; display:flex; align-items:center; justify-content:space-between; margin-bottom:30px; flex-wrap:wrap; gap:10px; }
-  .network-bar label { color:#8b949e; font-size:0.9rem; }
-  .network-bar select { background:#0d1117; color:#e0e0e0; border:1px solid #30363d; border-radius:6px; padding:6px 12px; font-size:0.9rem; }
-  .network-bar .status { display:flex; align-items:center; gap:6px; font-size:0.85rem; }
-  .dot { width:8px; height:8px; border-radius:50%; background:#3d444d; }
-  .dot.green { background:#3fb950; }
-  footer { width:100%; text-align:center; padding:20px; color:#484f58; font-size:0.8rem; border-top:1px solid #21262d; }
-  .steps { background:#161b22; border:1px solid #30363d; border-radius:10px; padding:20px; font-size:0.9rem; line-height:2.2; }
-  .steps span { color:#f0b90b; font-weight:600; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0a0e1a;--card:#111827;--card2:#1a2235;--border:#1e2d45;--accent:#f59e0b;--accent2:#3b82f6;--green:#22c55e;--red:#ef4444;--text:#f1f5f9;--muted:#94a3b8;--radius:14px}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh;overflow-x:hidden}
+
+  /* Background stars */
+  body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 20%,rgba(245,158,11,.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 80%,rgba(59,130,246,.06) 0%,transparent 60%);pointer-events:none;z-index:0}
+
+  /* Header */
+  header{position:sticky;top:0;z-index:100;background:rgba(10,14,26,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;letter-spacing:-.5px}
+  .logo-icon{width:36px;height:36px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px}
+  .logo span{background:linear-gradient(135deg,#f59e0b,#fbbf24);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+  nav{display:flex;gap:4px}
+  nav a{color:var(--muted);text-decoration:none;padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;transition:.2s;display:flex;align-items:center;gap:6px}
+  nav a:hover,nav a.active{color:var(--text);background:rgba(255,255,255,.06)}
+  nav a.active{color:var(--accent)}
+
+  #walletBtn{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;padding:9px 20px;border-radius:9px;font-weight:700;font-size:14px;cursor:pointer;transition:.2s;display:flex;align-items:center;gap:7px}
+  #walletBtn:hover{opacity:.9;transform:translateY(-1px)}
+  .wallet-connected{background:rgba(34,197,94,.15)!important;color:var(--green)!important;border:1px solid rgba(34,197,94,.3)!important}
+  .wallet-addr{font-family:monospace;font-size:13px}
+
+  /* Chain selector */
+  .chain-wrap{position:relative;margin-right:8px}
+  #chainSelect{background:var(--card2);color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:9px;font-size:13px;cursor:pointer;outline:none;-webkit-appearance:none;padding-right:28px}
+  .chain-arrow{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:var(--muted)}
+
+  /* Hero */
+  .hero{position:relative;z-index:1;text-align:center;padding:100px 20px 80px}
+  .hero-badge{display:inline-flex;align-items:center;gap:8px;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:var(--accent);padding:6px 16px;border-radius:99px;font-size:13px;font-weight:600;margin-bottom:24px}
+  .hero h1{font-size:clamp(2.2rem,5vw,3.8rem);font-weight:900;letter-spacing:-1px;line-height:1.1;margin-bottom:20px}
+  .hero h1 span{background:linear-gradient(135deg,#f59e0b,#ef4444,#8b5cf6);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{color:var(--muted);font-size:18px;max-width:600px;margin:0 auto 40px;line-height:1.7}
+  .hero-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+  .btn-primary{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;padding:14px 32px;border-radius:11px;font-weight:700;font-size:16px;cursor:pointer;text-decoration:none;transition:.2s;display:inline-flex;align-items:center;gap:8px}
+  .btn-primary:hover{opacity:.9;transform:translateY(-2px);box-shadow:0 8px 24px rgba(245,158,11,.3)}
+  .btn-secondary{background:transparent;color:var(--text);border:1px solid var(--border);padding:14px 32px;border-radius:11px;font-weight:600;font-size:16px;cursor:pointer;text-decoration:none;transition:.2s;display:inline-flex;align-items:center;gap:8px}
+  .btn-secondary:hover{background:var(--card2);border-color:var(--accent2)}
+
+  /* Stats */
+  .stats-row{position:relative;z-index:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:900px;margin:0 auto 80px;padding:0 20px}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;text-align:center;position:relative;overflow:hidden}
+  .stat-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(245,158,11,.03),transparent);pointer-events:none}
+  .stat-num{font-size:2rem;font-weight:800;color:var(--accent);margin-bottom:6px}
+  .stat-label{font-size:13px;color:var(--muted)}
+
+  /* Feature cards */
+  .section{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 20px 80px}
+  .section-title{font-size:1.8rem;font-weight:800;margin-bottom:8px}
+  .section-sub{color:var(--muted);margin-bottom:40px;font-size:15px}
+  .feature-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px}
+  .feature-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:.2s;text-decoration:none;color:var(--text);position:relative;overflow:hidden;display:block}
+  .feature-card:hover{border-color:var(--accent);transform:translateY(-3px);box-shadow:0 12px 32px rgba(0,0,0,.3)}
+  .feature-card::after{content:'→';position:absolute;right:20px;top:50%;transform:translateY(-50%);font-size:20px;color:var(--accent);opacity:0;transition:.2s}
+  .feature-card:hover::after{opacity:1;right:16px}
+  .feat-icon{width:48px;height:48px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:16px}
+  .feat-icon.deploy{background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.25)}
+  .feat-icon.mint{background:rgba(245,158,11,.15);border:1px solid rgba(245,158,11,.25)}
+  .feat-icon.admin{background:rgba(139,92,246,.15);border:1px solid rgba(139,92,246,.25)}
+  .feature-card h3{font-size:1.15rem;font-weight:700;margin-bottom:8px}
+  .feature-card p{color:var(--muted);font-size:14px;line-height:1.6}
+  .feat-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px}
+  .feat-tag{background:rgba(255,255,255,.06);padding:3px 10px;border-radius:6px;font-size:11px;color:var(--muted)}
+
+  /* Deployed history */
+  .history-section{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 20px 80px}
+  .table-wrap{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  table{width:100%;border-collapse:collapse}
+  th{background:var(--card2);padding:12px 16px;text-align:left;font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;font-weight:600}
+  td{padding:14px 16px;font-size:13px;border-top:1px solid var(--border)}
+  td a{color:var(--accent2);text-decoration:none}
+  td a:hover{text-decoration:underline}
+  .badge{display:inline-block;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600}
+  .badge.testnet{background:rgba(245,158,11,.15);color:var(--accent)}
+  .badge.mainnet{background:rgba(34,197,94,.15);color:var(--green)}
+  .empty-state{padding:48px;text-align:center;color:var(--muted)}
+  .empty-icon{font-size:2.5rem;margin-bottom:12px}
+
+  /* Footer */
+  footer{position:relative;z-index:1;border-top:1px solid var(--border);padding:32px;text-align:center;color:var(--muted);font-size:13px}
+
+  /* Spinner */
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+
+  /* Mobile */
+  @media(max-width:640px){
+    header{padding:0 16px}
+    nav{display:none}
+    .hero{padding:60px 16px 50px}
+    .stats-row{grid-template-columns:1fr 1fr}
+  }
 </style>
 </head>
 <body>
 <header>
-  <h1>FairmintBSC</h1>
-  <p>去中心化公平铸造 · BSC 智能合约一键部署与管理</p>
-</header>
-<div class="container">
-  <div class="network-bar">
-    <div>
-      <label>网络：</label>
-      <select id="networkSelect" onchange="switchNetwork()">
-        <option value="97">BSC 测试网</option>
-        <option value="56">BSC 主网</option>
+  <div class="logo">
+    <div class="logo-icon">🔥</div>
+    <span>ModaFairMint</span>
+  </div>
+  <nav>
+    <a href="index.html" class="active">🏠 首页</a>
+    <a href="deploy.html">🚀 部署</a>
+    <a href="mint.html">⚡ Mint</a>
+    <a href="admin.html">⚙️ 管理</a>
+  </nav>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="chain-wrap">
+      <select id="chainSelect" onchange="onChainSelectChange(this.value)">
+        <option value="97">🟡 BSC 测试网</option>
+        <option value="56">🟢 BSC 主网</option>
       </select>
+      <span class="chain-arrow">▼</span>
     </div>
-    <div class="status">
-      <span class="dot" id="walletDot"></span>
-      <span id="walletStatus">未连接钱包</span>
-    </div>
-    <button id="connectBtn" onclick="connectWallet()" style="background:#f0b90b;border:none;color:#000;padding:8px 18px;border-radius:6px;font-weight:600;cursor:pointer;">连接钱包</button>
+    <button id="walletBtn" onclick="handleConnectWallet()">🦊 连接钱包</button>
   </div>
+</header>
+
+<div class="hero">
+  <div class="hero-badge">✨ BSC Fair Mint 发射平台 V1</div>
+  <h1>公平铸造<br><span>代币发射平台</span></h1>
+  <p>基于 ModaFairMintToken 智能合约 — 一人一次 Mint，即时加池，自动税收，支持测试网与 BSC 主网一键部署</p>
+  <div class="hero-btns">
+    <a href="deploy.html" class="btn-primary">🚀 立即部署合约</a>
+    <a href="mint.html" class="btn-secondary">⚡ 参与 Mint</a>
+  </div>
+</div>
+
+<div class="stats-row" id="statsRow">
+  <div class="stat-card">
+    <div class="stat-num" id="statDeployed">—</div>
+    <div class="stat-label">本地已部署合约</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">100%</div>
+    <div class="stat-label">Mint 即加 LP</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">≤10%</div>
+    <div class="stat-label">最大税率上限</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-num">3种</div>
+    <div class="stat-label">开盘模式可选</div>
+  </div>
+</div>
 
   <div class="section">
-    <h2>📋 我的合约</h2>
-    <div class="network-bar" style="margin-bottom:16px;">
-      <input type="text" id="contractAddrInput" placeholder="输入你的合约地址 0x..." oninput="saveContractAddr()" style="flex:1;background:#0d1117;border:1px solid #30363d;border-radius:8px;padding:10px 14px;color:#e0e0e0;font-size:0.9rem;min-width:200px;" />
-    </div>
-    <p style="color:#8b949e;font-size:0.8rem;margin-bottom:10px;">输入后，下方入口会自动带上合约地址，打开即用</p>
+    <div class="section-title">🎯 平台功能</div>
+    <div class="section-sub">三大页面，覆盖从部署到运营的完整生命周期</div>
+    <div class="feature-grid">
+      <a href="deploy.html" class="feature-card">
+        <div class="feat-icon deploy">🚀</div>
+        <h3>合约部署（字节码已内嵌）</h3>
+        <p>填写代币参数，一键连接 MetaMask 完成合约部署 — 字节码已预编译嵌入，<strong>无需粘贴 Remix 编译产物</strong></p>
+        <div class="feat-tags">
+          <span class="feat-tag">BSC 测试网</span>
+          <span class="feat-tag">BSC 主网</span>
+          <span class="feat-tag">PancakeSwap V2</span>
+          <span class="feat-tag">参数校验</span>
+        </div>
+      </a>
+    <a href="mint.html" class="feature-card">
+      <div class="feat-icon mint">⚡</div>
+      <h3>用户 Mint</h3>
+      <p>一人一次公平 Mint，支持 BNB 和 USDT 两种模式，实时显示进度条和剩余份额</p>
+      <div class="feat-tags">
+        <span class="feat-tag">BNB Mint</span>
+        <span class="feat-tag">USDT Mint</span>
+        <span class="feat-tag">进度实时更新</span>
+        <span class="feat-tag">白名单检查</span>
+      </div>
+    </a>
+    <a href="admin.html" class="feature-card">
+      <div class="feat-icon admin">⚙️</div>
+      <h3>Owner 后台</h3>
+      <p>完整管理面板：开盘控制、税收设置、白/黑名单、Swap 配置、紧急提取、LP 操作</p>
+      <div class="feat-tags">
+        <span class="feat-tag">开盘管理</span>
+        <span class="feat-tag">税收配置</span>
+        <span class="feat-tag">白/黑名单</span>
+        <span class="feat-tag">资金提取</span>
+      </div>
+    </a>
   </div>
+</div>
 
-  <div class="section">
-    <h2>🚀 功能入口</h2>
-    <div class="cards">
-      <a class="card" href="deploy.html">
-        <div class="card-icon">📦</div>
-        <div class="card-title">部署合约 <span class="badge deploy">部署者</span></div>
-        <div class="card-desc">编译并部署 FairmintBSC 合约到 BSC 网络，填写代币参数一键上链。</div>
-      </a>
-      <a class="card" id="cardMint" href="mint.html">
-        <div class="card-icon">🪙</div>
-        <div class="card-title">Mint 铸造 <span class="badge user">用户</span></div>
-        <div class="card-desc">连接钱包，参与 Mint 铸造获取代币。支持白名单查验。</div>
-      </a>
-      <a class="card" id="cardAdmin" href="admin.html">
-        <div class="card-icon">⚙️</div>
-        <div class="card-title">管理面板 <span class="badge owner">Owner</span></div>
-        <div class="card-desc">Owner 专用：Mint 配置、开盘控制、税收设置、白名单管理、紧急风控。</div>
-      </a>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2>📖 使用流程</h2>
-    <div class="steps">
-      <div><span>①</span> 切换到 BSC 测试网，点击「部署合约」</div>
-      <div><span>②</span> 填写代币名称、符号、总量等参数，确认部署交易</div>
-      <div><span>③</span> 部署成功后在管理面板配置 Mint 参数、白名单等</div>
-      <div><span>④</span> 开启 Mint，用户即可在 Mint 页面参与铸造</div>
-      <div><span>⑤</span> Mint 结束后自动（或手动）开盘添加流动性</div>
+<div class="history-section">
+  <div class="section-title">📋 已部署合约</div>
+  <div class="section-sub">本地浏览器记录（当前链）</div>
+  <div class="table-wrap">
+    <div id="historyTable">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <div>暂无部署记录，请先连接钱包并选择链</div>
+      </div>
     </div>
   </div>
 </div>
-<footer>FairmintBSC Frontend · 纯前端去中心化应用 · 无需后端</footer>
+
+<footer>
+  <div>ModaFairMint Platform — BSC 链公平发射平台 | 仅供技术测试使用</div>
+  <div style="margin-top:8px;display:flex;gap:20px;justify-content:center">
+    <a href="deploy.html" style="color:var(--accent2)">部署合约</a>
+    <a href="mint.html" style="color:var(--accent2)">参与 Mint</a>
+    <a href="admin.html" style="color:var(--accent2)">管理后台</a>
+  </div>
+</footer>
 
 <script>
-const NETWORKS = {
-  97: { chainId:'0x61', rpc:'https://data-seed-prebsc-1-s1.binance.org:8545', label:'BSC 测试网' },
-  56: { chainId:'0x38', rpc:'https://bsc-dataseed.binance.org', label:'BSC 主网' }
-};
-let currentAccount = null;
-
-async function connectWallet() {
-  if (!window.ethereum) { alert('请安装 MetaMask！'); return; }
+async function handleConnectWallet() {
+  const btn = document.getElementById('walletBtn');
   try {
-    const accounts = await window.ethereum.request({ method:'eth_requestAccounts' });
-    currentAccount = accounts[0];
-    updateWalletUI();
-  } catch (e) { alert('连接失败：' + e.message); }
-}
-
-function updateWalletUI() {
-  const dot = document.getElementById('walletDot');
-  const status = document.getElementById('walletStatus');
-  const btn = document.getElementById('connectBtn');
-  if (currentAccount) {
-    dot.className = 'dot green';
-    status.textContent = currentAccount.slice(0,6) + '...' + currentAccount.slice(-4);
-    btn.textContent = '已连接'; btn.disabled = true;
-  }
-}
-
-async function switchNetwork() {
-  const net = Number(document.getElementById('networkSelect').value);
-  const info = NETWORKS[net];
-  try {
-    await window.ethereum.request({ method:'wallet_switchEthereumChain', params:[{ chainId:info.chainId }] });
+    setLoading(btn, true, '连接中...');
+    const account = await connectWallet();
+    const chainId = await getChainId();
+    window.currentChainId = Number(chainId);
+    updateWalletUI(account, chainId);
+    loadHistory();
   } catch (e) {
-    if (e.code === 4902) {
-      try {
-        await window.ethereum.request({ method:'wallet_addEthereumChain', params:[{ chainId:info.chainId, rpcUrls:[info.rpc], chainName:info.label, nativeCurrency:{name:'BNB',symbol:'BNB',decimals:18} }] });
-      } catch (e2) { alert('添加网络失败：' + e2.message); }
-    }
+    showToast(e.message || '连接失败', 'error');
+    setLoading(btn, false, '🦊 连接钱包');
   }
 }
 
-if (window.ethereum) {
-  window.ethereum.on('accountsChanged', (accs) => { currentAccount = accs[0]||null; updateWalletUI(); });
-  window.ethereum.on('chainChanged', () => location.reload());
+function updateWalletUI(account, chainId) {
+  const btn = document.getElementById('walletBtn');
+  btn.innerHTML = `🟢 <span class="wallet-addr">${shortAddr(account)}</span>`;
+  btn.classList.add('wallet-connected');
+  btn.disabled = false;
+  const sel = document.getElementById('chainSelect');
+  sel.value = Number(chainId).toString();
+  window.currentChainId = Number(chainId);
 }
 
-// ===== 合约地址持久化 + 页面跳转带参数 =====
-const CONTRACT_KEY = 'fairmint_contract_addr';
-
-function saveContractAddr() {
-  const addr = document.getElementById('contractAddrInput').value.trim();
-  if (addr) localStorage.setItem(CONTRACT_KEY, addr);
-  updatePageLinks();
+async function onChainSelectChange(val) {
+  const chainId = parseInt(val);
+  if (!userAccount) { showToast('请先连接钱包', 'warning'); return; }
+  try {
+    await switchChain(chainId);
+    window.currentChainId = chainId;
+    loadHistory();
+  } catch(e) { showToast('切链失败: ' + e.message, 'error'); }
 }
 
-function updatePageLinks() {
-  const addr = document.getElementById('contractAddrInput').value.trim() || localStorage.getItem(CONTRACT_KEY) || '';
-  const q = addr ? '?contract=' + encodeURIComponent(addr) : '';
-  document.getElementById('cardMint').href = 'mint.html' + q;
-  document.getElementById('cardAdmin').href = 'admin.html' + q;
-}
+function loadHistory() {
+  const chainId = window.currentChainId || 97;
+  const list = getDeployedContracts(chainId);
+  const chain = getChainConfig(chainId);
+  const container = document.getElementById('historyTable');
+  const statEl = document.getElementById('statDeployed');
+  statEl.textContent = list.length || '0';
 
-// 页面加载时恢复
-(function initContractAddr() {
-  const saved = localStorage.getItem(CONTRACT_KEY);
-  if (saved) {
-    document.getElementById('contractAddrInput').value = saved;
-    updatePageLinks();
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-icon">📭</div><div>当前链 (${chain.name}) 暂无部署记录</div></div>`;
+    return;
   }
+
+  const rows = list.map(c => {
+    const isTest = chainId === 97;
+    const badgeClass = isTest ? 'testnet' : 'mainnet';
+    const badgeText = isTest ? '测试网' : '主网';
+    const explorerLink = `${chain.explorer}/address/${c.address}`;
+    const date = new Date(c.time).toLocaleString('zh-CN');
+    return `<tr>
+      <td><code style="font-size:12px">${c.address}</code>
+        <button onclick="copyToClipboard('${c.address}')" style="background:none;border:none;cursor:pointer;color:var(--muted);margin-left:6px">📋</button>
+      </td>
+      <td><strong>${c.name || '-'}</strong> <span style="color:var(--muted)">${c.symbol || ''}</span></td>
+      <td><span class="badge ${badgeClass}">${badgeText}</span></td>
+      <td style="color:var(--muted);font-size:12px">${date}</td>
+      <td>
+        <a href="${explorerLink}" target="_blank">浏览器 ↗</a>
+        <a href="mint.html?contract=${c.address}&chain=${chainId}" style="margin-left:12px">Mint →</a>
+        <a href="admin.html?contract=${c.address}&chain=${chainId}" style="margin-left:12px">管理 →</a>
+      </td>
+    </tr>`;
+  }).join('');
+
+  container.innerHTML = `<table>
+    <thead><tr><th>合约地址</th><th>代币</th><th>网络</th><th>部署时间</th><th>操作</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
+
+// 初始化
+(async () => {
+  loadHistory(); // 不依赖 wallet，先显示本地历史
+  if (window.ethereum) {
+    try {
+      await initWeb3();
+      const accounts = await ethRpc('eth_accounts');
+      if (accounts && accounts.length > 0) {
+        const account = accounts[0];
+        const chainId = await getChainId();
+        userAccount = account;
+        updateWalletUI(account, chainId);
+      }
+    } catch(e) { console.warn('auto connect:', e); }
+  }
+  listenWalletEvents(
+    (acc) => {
+      if (acc) { userAccount = acc; updateWalletUI(acc, window.currentChainId); }
+      else {
+        const b = document.getElementById('walletBtn');
+        b.innerHTML = '🦊 连接钱包';
+        b.classList.remove('wallet-connected');
+        userAccount = null;
+      }
+    },
+    (chainId) => { window.currentChainId = chainId; document.getElementById('chainSelect').value = chainId.toString(); loadHistory(); }
+  );
 })();
 </script>
 </body>

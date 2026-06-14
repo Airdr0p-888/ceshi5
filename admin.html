@@ -3,1679 +3,881 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FairmintBSC - 管理面板</title>
+<title>Owner 管理后台 — Moda Fair Mint</title>
+
+<script src="js/config.js"></script>
+<script src="js/abi.js"></script>
+<script src="js/web3utils.js"></script>
+<script src="js/web3compat.js"></script>
 <style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Segoe UI',sans-serif; background:#0a0e17; color:#e0e0e0; min-height:100vh; }
-  header { background:linear-gradient(135deg,#1a1f2e,#0d1117); border-bottom:1px solid #2d333b; padding:14px 24px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; }
-  header .left { display:flex; align-items:center; gap:16px; }
-  header h1 { font-size:1.3rem; background:linear-gradient(90deg,#f0b90b,#f8d12f); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-  header a { color:#8b949e; text-decoration:none; font-size:0.85rem; }
-  header a:hover { color:#f0b90b; }
-  .nav-links { display:flex; gap:16px; }
-  .wallet-bar { display:flex; align-items:center; gap:10px; }
-  .dot { width:8px; height:8px; border-radius:50%; background:#3d444d; display:inline-block; }
-  .dot.green { background:#3fb950; }
-  button { cursor:pointer; border:none; border-radius:8px; font-weight:600; font-size:0.9rem; }
-  .btn-connect { background:#f0b90b; color:#000; padding:8px 18px; }
-  .container { max-width:1100px; margin:30px auto; padding:0 16px; }
-  .card { background:#161b22; border:1px solid #30363d; border-radius:14px; padding:24px; margin-bottom:20px; }
-  .card h2 { color:#f0b90b; font-size:1.05rem; margin-bottom:16px; padding-bottom:8px; border-bottom:1px solid #21262d; }
-  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-  .grid3 { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
-  @media(max-width:640px) { .grid2,.grid3 { grid-template-columns:1fr; } }
-  .input-group { margin-bottom:12px; }
-  .input-group label { display:block; color:#8b949e; font-size:0.8rem; margin-bottom:4px; }
-  .input-group input,.input-group select { width:100%; background:#0d1117; border:1px solid #30363d; border-radius:6px; padding:10px; color:#e0e0e0; font-size:0.9rem; }
-  .input-group input:focus,.input-group select:focus { outline:none; border-color:#f0b90b; }
-  .btn-action { background:#238636; color:#fff; padding:10px 18px; margin-top:8px; width:100%; }
-  .btn-action.danger { background:#da3633; }
-  .btn-action.warn { background:#9e6a03; }
-  .btn-action.primary { background:#1f6feb; }
-  .row { display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #21262d; font-size:0.85rem; }
-  .row:last-child { border-bottom:none; }
-  .row .label { color:#8b949e; }
-  .row .value { color:#e0e0e0; font-weight:500; }
-  .status-msg { margin-top:12px; padding:10px; border-radius:8px; font-size:0.82rem; display:none; }
-  .status-msg.ok { display:block; background:#0d2818; border:1px solid #238636; color:#3fb950; }
-  .status-msg.err { display:block; background:#2d1010; border:1px solid #da3633; color:#f85149; }
-  .status-msg.info { display:block; background:#0d1f3c; border:1px solid #1f6feb; color:#58a6ff; }
-  .tabs { display:flex; gap:0; margin-bottom:20px; border-bottom:1px solid #30363d; flex-wrap:wrap; }
-  .tab { padding:10px 18px; cursor:pointer; color:#8b949e; font-size:0.9rem; border-bottom:2px solid transparent; }
-  .tab.active { color:#f0b90b; border-bottom-color:#f0b90b; }
-  .tab-content { display:none; }
-  .tab-content.active { display:block; }
-  #ownerCheck { padding:20px; text-align:center; }
-  #mainPanel { display:none; }
-  .contract-input { display:flex; gap:10px; margin-bottom:20px; }
-  .contract-input input { flex:1; }
-  .contract-input button { white-space:nowrap; }
-  .btn-small { padding:6px 14px; font-size:0.82rem; background:#21262d; color:#e0e0e0; border:1px solid #30363d; }
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{--bg:#0a0e1a;--card:#111827;--card2:#1a2235;--border:#1e2d45;--accent:#f59e0b;--accent2:#3b82f6;--green:#22c55e;--red:#ef4444;--purple:#8b5cf6;--text:#f1f5f9;--muted:#94a3b8;--radius:14px}
+  body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;min-height:100vh}
+  header{position:sticky;top:0;z-index:100;background:rgba(10,14,26,.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:0 32px;display:flex;align-items:center;justify-content:space-between;height:64px}
+  .logo{display:flex;align-items:center;gap:10px;font-size:18px;font-weight:800;text-decoration:none;color:var(--text)}
+  .logo-icon{width:32px;height:32px;background:linear-gradient(135deg,#f59e0b,#ef4444);border-radius:8px;display:flex;align-items:center;justify-content:center}
+  nav a{color:var(--muted);text-decoration:none;padding:8px 14px;border-radius:8px;font-size:14px;transition:.2s}
+  nav a:hover,nav a.active{color:var(--text);background:rgba(255,255,255,.06)}
+  nav a.active{color:var(--accent)}
+  nav{display:flex;gap:2px}
+  #walletBtn{background:linear-gradient(135deg,#f59e0b,#d97706);color:#000;border:none;padding:8px 18px;border-radius:9px;font-weight:700;font-size:13px;cursor:pointer}
+  .wallet-connected{background:rgba(34,197,94,.15)!important;color:var(--green)!important;border:1px solid rgba(34,197,94,.3)!important}
+  .chain-wrap{position:relative;margin-right:8px}
+  #chainSelect{background:var(--card2);color:var(--text);border:1px solid var(--border);padding:7px 28px 7px 12px;border-radius:9px;font-size:13px;cursor:pointer;outline:none;-webkit-appearance:none}
+  .chain-arrow{position:absolute;right:8px;top:50%;transform:translateY(-50%);pointer-events:none;font-size:10px;color:var(--muted)}
+
+  .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 64px)}
+
+  /* Sidebar */
+  .sidebar{background:var(--card);border-right:1px solid var(--border);padding:16px 12px;overflow-y:auto}
+  .sidebar-section{margin-bottom:20px}
+  .sidebar-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;padding:4px 8px;margin-bottom:4px;font-weight:600}
+  .sidebar-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:500;color:var(--muted);transition:.2s;border:none;background:none;width:100%;text-align:left}
+  .sidebar-item:hover{color:var(--text);background:rgba(255,255,255,.05)}
+  .sidebar-item.active{color:var(--text);background:rgba(245,158,11,.1);color:var(--accent)}
+
+  /* Content */
+  .content{padding:28px;overflow-y:auto}
+
+  /* Contract bar */
+  .contract-bar{display:flex;gap:10px;margin-bottom:24px}
+  .contract-bar input{flex:1;background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 14px;border-radius:9px;font-size:13px;font-family:monospace;outline:none;transition:.2s}
+  .contract-bar input:focus{border-color:var(--accent)}
+  .btn-sm{background:var(--card2);color:var(--text);border:1px solid var(--border);padding:10px 16px;border-radius:9px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.2s}
+  .btn-sm:hover{border-color:var(--accent);color:var(--accent)}
+
+  /* Not owner warning */
+  .not-owner-banner{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:14px 18px;color:var(--red);font-size:14px;margin-bottom:20px;display:none}
+
+  /* Status overview */
+  .overview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;margin-bottom:24px}
+  .ov-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center}
+  .ov-val{font-size:1.1rem;font-weight:800;margin-bottom:4px}
+  .ov-lbl{font-size:11px;color:var(--muted)}
+  .ov-val.green{color:var(--green)}
+  .ov-val.red{color:var(--red)}
+  .ov-val.accent{color:var(--accent)}
+  .ov-val.blue{color:var(--accent2)}
+
+  /* Panels */
+  .panel{display:none}
+  .panel.active{display:block}
+  .panel-title{font-size:1.1rem;font-weight:800;margin-bottom:20px;display:flex;align-items:center;gap:8px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+
+  /* Card */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:16px}
+  .card-title{font-size:14px;font-weight:700;margin-bottom:16px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+
+  /* Field */
+  .field-row{display:flex;gap:12px;align-items:flex-end;margin-bottom:12px;flex-wrap:wrap}
+  .field-wrap{display:flex;flex-direction:column;gap:5px;flex:1;min-width:160px}
+  .field-label{font-size:12px;color:var(--muted);font-weight:600}
+  .field-input{background:var(--card2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;outline:none;transition:.2s;font-family:inherit;width:100%}
+  .field-input:focus{border-color:var(--accent)}
+  .field-hint{font-size:11px;color:var(--muted)}
+
+  /* Buttons */
+  .btn{padding:9px 20px;border-radius:8px;font-weight:700;font-size:13px;cursor:pointer;border:none;transition:.2s;display:inline-flex;align-items:center;gap:6px}
+  .btn-green{background:var(--green);color:#000}
+  .btn-green:hover{opacity:.85}
+  .btn-blue{background:var(--accent2);color:#fff}
+  .btn-blue:hover{opacity:.85}
+  .btn-yellow{background:var(--accent);color:#000}
+  .btn-yellow:hover{opacity:.85}
+  .btn-red{background:var(--red);color:#fff}
+  .btn-red:hover{opacity:.85}
+  .btn-purple{background:var(--purple);color:#fff}
+  .btn-purple:hover{opacity:.85}
+  .btn-gray{background:var(--card2);color:var(--text);border:1px solid var(--border)}
+  .btn-gray:hover{border-color:var(--muted)}
+  .btn:disabled{opacity:.5;cursor:not-allowed}
+
+  /* Toggle */
+  .toggle-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)}
+  .toggle-row:last-child{border-bottom:none}
+  .toggle-label{font-size:14px;font-weight:600}
+  .toggle-sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .toggle-btns{display:flex;gap:6px}
+  .toggle-on{background:rgba(34,197,94,.15);color:var(--green);border:1px solid rgba(34,197,94,.3);padding:6px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
+  .toggle-off{background:rgba(239,68,68,.1);color:var(--red);border:1px solid rgba(239,68,68,.25);padding:6px 14px;border-radius:7px;font-size:12px;font-weight:700;cursor:pointer}
+
+  /* Tax share visual */
+  .tax-bar{height:6px;border-radius:4px;margin-top:4px;display:flex;overflow:hidden;gap:2px}
+  .tax-seg{border-radius:4px;transition:width .4s}
+
+  /* Table */
+  .data-table{width:100%;border-collapse:collapse;font-size:13px}
+  .data-table th{background:var(--card2);padding:10px 14px;text-align:left;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+  .data-table td{padding:11px 14px;border-top:1px solid var(--border)}
+  .data-table td code{font-family:monospace;font-size:12px}
+
+  /* Withdraw cards */
+  .withdraw-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px}
+  .w-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:20px}
+  .w-card-title{font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:6px}
+  .w-card-bal{font-size:1.2rem;font-weight:800;color:var(--accent);margin:10px 0}
+  .w-card-hint{font-size:12px;color:var(--muted);margin-bottom:14px}
+
+  /* Danger zone */
+  .danger-zone{border-color:rgba(239,68,68,.3)!important;background:rgba(239,68,68,.03)!important}
+  .danger-zone .card-title{color:var(--red)}
+
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .spinner{display:inline-block;width:12px;height:12px;border:2px solid rgba(0,0,0,.3);border-top-color:#000;border-radius:50%;animation:spin .7s linear infinite}
+  .spinner-white{border-color:rgba(255,255,255,.3);border-top-color:#fff}
+
+  @media(max-width:768px){.layout{grid-template-columns:1fr}.sidebar{display:none}}
 </style>
 </head>
 <body>
 <header>
-  <div class="left">
-    <h1>FairmintBSC 管理面板</h1>
-    <div class="nav-links">
-      <a href="index.html">🏠 首页</a>
-      <a href="deploy.html">📦 部署</a>
-      <a href="mint.html">🪙 Mint</a>
+  <a href="index.html" class="logo"><div class="logo-icon">🔥</div>ModaFairMint</a>
+  <nav>
+    <a href="index.html">🏠 首页</a>
+    <a href="deploy.html">🚀 部署</a>
+    <a href="mint.html">⚡ Mint</a>
+    <a href="admin.html" class="active">⚙️ 管理</a>
+  </nav>
+  <div style="display:flex;align-items:center;gap:8px">
+    <div class="chain-wrap">
+      <select id="chainSelect" onchange="onChainChange(this.value)">
+        <option value="97">🟡 BSC 测试网</option>
+        <option value="56">🟢 BSC 主网</option>
+      </select>
+      <span class="chain-arrow">▼</span>
     </div>
-  </div>
- <div class="wallet-bar">
-    <span class="dot" id="walletDot"></span>
-    <span id="walletAddr" style="font-size:0.85rem;color:#8b949e;">未连接</span>
-    <button class="btn-connect" id="connectBtn" onclick="connectWallet()">连接钱包</button>
+    <button id="walletBtn" onclick="handleConnect()">🦊 连接钱包</button>
   </div>
 </header>
 
-<div class="container">
-  <div class="contract-input">
-    <input type="text" id="contractAddr" placeholder="输入已部署的合约地址 0x..." style="flex:1;background:#161b22;border:1px solid #30363d;border-radius:8px;padding:12px;color:#e0e0e0;font-size:0.95rem;" />
-    <button class="btn-small" onclick="loadContract()" style="background:#1f6feb;color:#fff;padding:12px 20px;border-radius:8px;">加载合约</button>
+<div class="layout">
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div style="padding:8px 8px 16px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--border);margin-bottom:16px">
+      Owner 管理后台
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">概览</div>
+      <button class="sidebar-item active" onclick="showPanel('overview')">📊 合约状态</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">运营</div>
+      <button class="sidebar-item" onclick="showPanel('launch')">🚀 开盘控制</button>
+      <button class="sidebar-item" onclick="showPanel('mint-cfg')">⚡ Mint 配置</button>
+      <button class="sidebar-item" onclick="showPanel('whitelist')">📋 白名单</button>
+      <button class="sidebar-item" onclick="showPanel('blacklist')">🚫 黑名单</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">税收 & Swap</div>
+      <button class="sidebar-item" onclick="showPanel('tax')">💰 税收配置</button>
+      <button class="sidebar-item" onclick="showPanel('swap')">🔄 Swap 配置</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">资金</div>
+      <button class="sidebar-item" onclick="showPanel('withdraw')">💸 资金提取</button>
+      <button class="sidebar-item" onclick="showPanel('lp')">💧 LP 管理</button>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">安全</div>
+      <button class="sidebar-item" onclick="showPanel('pause')">⏸️ 暂停 / 恢复</button>
+      <button class="sidebar-item" onclick="showPanel('danger')">⚠️ 危险操作</button>
+    </div>
   </div>
 
-  <div id="ownerCheck">
-    <p style="color:#8b949e;">请先连接钱包并加载合约地址</p>
-  </div>
-
-  <div id="mainPanel">
-    <div class="tabs">
-      <div class="tab active" id="tab-btn-dashboard" onclick="switchTab('dashboard')">📊 仪表盘</div>
-      <div class="tab" id="tab-btn-mint" onclick="switchTab('mint')">🎯 Mint 配置</div>
-      <div class="tab" id="tab-btn-open" onclick="switchTab('open')">🚀 开盘控制</div>
-      <div class="tab" id="tab-btn-tax" onclick="switchTab('tax')">💰 税收配置</div>
-      <div class="tab" id="tab-btn-whitelist" onclick="switchTab('whitelist')">📋 白名单</div>
-      <div class="tab" id="tab-btn-dividend" onclick="switchTab('dividend')">🎁 分红</div>
-      <div class="tab" id="tab-btn-risk" onclick="switchTab('risk')">🛡️ 风控</div>
+  <!-- Content -->
+  <div class="content">
+    <!-- Contract bar -->
+    <div class="contract-bar">
+      <input type="text" id="contractAddr" placeholder="输入合约地址 0x...">
+      <button class="btn-sm" onclick="loadContract()">加载合约</button>
+      <button class="btn-sm" onclick="loadFromHistory()">📋 历史</button>
+      <button class="btn-sm" onclick="refreshAll()">🔄 刷新</button>
     </div>
 
-    <!-- 仪表盘 -->
-    <div class="tab-content active" id="tab-dashboard"></div>
-    <!-- Mint 配置 -->
-    <div class="tab-content" id="tab-mint"></div>
-    <!-- 开盘控制 -->
-    <div class="tab-content" id="tab-open"></div>
-    <!-- 税收配置 -->
-    <div class="tab-content" id="tab-tax"></div>
-    <!-- 白名单 -->
-    <div class="tab-content" id="tab-whitelist"></div>
-    <!-- 分红 -->
-    <div class="tab-content" id="tab-dividend"></div>
-    <!-- 风控 -->
-    <div class="tab-content" id="tab-risk"></div>
+    <div id="notOwnerBanner" class="not-owner-banner">
+      ⚠️ 您的钱包不是该合约的 Owner，只能查看数据，无法执行管理操作
+    </div>
+
+    <!-- Overview Panel -->
+    <div id="panel-overview" class="panel active">
+      <div class="panel-title">📊 合约状态总览</div>
+      <div id="overviewContent">
+        <div style="text-align:center;padding:60px;color:var(--muted)">
+          <div style="font-size:3rem;margin-bottom:12px">📋</div>
+          <div>请输入合约地址并点击「加载合约」</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Launch Panel -->
+    <div id="panel-launch" class="panel">
+      <div class="panel-title">🚀 开盘控制</div>
+      <div class="card">
+        <div class="card-title">交易开关</div>
+        <div id="tradingStatus" style="margin-bottom:16px;font-size:14px"></div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap">
+          <button class="btn btn-green" onclick="callMethod('openTrading')">🟢 手动开盘 (MANUAL)</button>
+          <button class="btn btn-blue" onclick="callMethod('checkLaunchTime')">⏰ 检查定时开盘</button>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+          注：openTrading 仅在 MANUAL 模式有效；AUTO 模式 Mint 满额自动开盘；TIME 模式达到设定时间自动开盘
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">修改定时开盘时间</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">新开盘时间</label>
+            <input type="datetime-local" id="newLaunchTime" class="field-input">
+          </div>
+          <button class="btn btn-yellow" onclick="setLaunchTime()">⏰ 设置时间</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">初始化交易对</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:14px">在 Mint 之前必须先初始化交易对（initPair）</div>
+        <button class="btn btn-blue" onclick="callMethod('initPair')">🔗 初始化 Pair</button>
+        <div id="pairStatus" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <!-- Mint Config Panel -->
+    <div id="panel-mint-cfg" class="panel">
+      <div class="panel-title">⚡ Mint 参数配置</div>
+      <div class="card">
+        <div class="card-title">Mint 价格</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">新 Mint 价格（BNB/USDT）</label>
+            <input type="number" id="newMintPrice" class="field-input" placeholder="e.g. 0.01" step="0.0001">
+          </div>
+          <button class="btn btn-yellow" onclick="setMintPrice()">✏️ 更新价格</button>
+        </div>
+        <div id="currentMintPrice" style="font-size:13px;color:var(--muted)"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">每次 Mint 代币数</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">新 tokenPerMint</label>
+            <input type="number" id="newTokenPerMint" class="field-input" placeholder="e.g. 1000">
+          </div>
+          <button class="btn btn-yellow" onclick="setTokenPerMint()">✏️ 更新</button>
+        </div>
+        <div id="currentTokenPerMint" style="font-size:13px;color:var(--muted)"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">最大 Mint 次数</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">新 maxMintCount</label>
+            <input type="number" id="newMaxMintCount" class="field-input" placeholder="e.g. 500">
+          </div>
+          <button class="btn btn-yellow" onclick="setMaxMintCount()">✏️ 更新</button>
+        </div>
+        <div id="currentMaxMintCount" style="font-size:13px;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <!-- Whitelist Panel -->
+    <div id="panel-whitelist" class="panel">
+      <div class="panel-title">📋 白名单管理</div>
+      <div class="card">
+        <div class="card-title">白名单开关</div>
+        <div id="wlStatusRow" class="toggle-row">
+          <div><div class="toggle-label">白名单模式</div><div class="toggle-sub">开启后仅白名单地址可 Mint</div></div>
+          <div class="toggle-btns">
+            <button class="toggle-on" onclick="setWhitelistStatus(true)">开启</button>
+            <button class="toggle-off" onclick="setWhitelistStatus(false)">关闭</button>
+          </div>
+        </div>
+        <div id="wlCurrentStatus" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">添加白名单地址</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">地址列表（每行一个）</label>
+            <textarea id="wlAddresses" class="field-input" rows="5" placeholder="0x...\n0x...\n0x..." style="resize:vertical;font-family:monospace;font-size:12px"></textarea>
+          </div>
+        </div>
+        <button class="btn btn-green" onclick="addWhitelist()">✅ 批量添加白名单</button>
+      </div>
+      <div class="card">
+        <div class="card-title">查询地址</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">要查询的地址</label>
+            <input type="text" id="checkWlAddr" class="field-input" placeholder="0x...">
+          </div>
+          <button class="btn btn-blue" onclick="checkWhitelist()">🔍 查询</button>
+        </div>
+        <div id="wlQueryResult" style="font-size:13px;margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- Blacklist Panel -->
+    <div id="panel-blacklist" class="panel">
+      <div class="panel-title">🚫 黑名单管理</div>
+      <div class="card">
+        <div class="card-title">添加 / 移除黑名单</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">地址列表（每行一个）</label>
+            <textarea id="blAddresses" class="field-input" rows="5" placeholder="0x...\n0x...\n0x..." style="resize:vertical;font-family:monospace;font-size:12px"></textarea>
+          </div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn btn-red" onclick="setBlacklist(true)">🚫 拉黑</button>
+          <button class="btn btn-green" onclick="setBlacklist(false)">✅ 解除黑名单</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">查询地址</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <input type="text" id="checkBlAddr" class="field-input" placeholder="0x...">
+          </div>
+          <button class="btn btn-blue" onclick="checkBlacklist()">🔍 查询</button>
+        </div>
+        <div id="blQueryResult" style="font-size:13px;margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- Tax Panel -->
+    <div id="panel-tax" class="panel">
+      <div class="panel-title">💰 税收配置</div>
+      <div id="taxLockedBanner" style="display:none;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:10px;padding:12px 16px;color:var(--red);font-size:13px;margin-bottom:16px">
+        🔒 税收已锁定，无法修改
+      </div>
+      <div class="card">
+        <div class="card-title">买卖税率（最大 1000 = 10%）</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">买入税 buyTax</label>
+            <input type="number" id="newBuyTax" class="field-input" min="0" max="1000">
+            <div class="field-hint" id="curBuyTax"></div>
+          </div>
+          <button class="btn btn-yellow" onclick="setBuyTax()">✏️ 设置买税</button>
+        </div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">卖出税 sellTax</label>
+            <input type="number" id="newSellTax" class="field-input" min="0" max="1000">
+            <div class="field-hint" id="curSellTax"></div>
+          </div>
+          <button class="btn btn-yellow" onclick="setSellTax()">✏️ 设置卖税</button>
+        </div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">转账税 transferTax</label>
+            <input type="number" id="newTransferTax" class="field-input" min="0" max="1000">
+            <div class="field-hint" id="curTransferTax"></div>
+          </div>
+          <button class="btn btn-yellow" onclick="setTransferTax()">✏️ 设置转账税</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">税收分配比例（三项之和必须 = 10000）</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">营销 marketingShare</label>
+            <input type="number" id="newMktShare" class="field-input" min="0" max="10000">
+          </div>
+          <div class="field-wrap">
+            <label class="field-label">销毁 burnShare</label>
+            <input type="number" id="newBurnShare" class="field-input" min="0" max="10000">
+          </div>
+          <div class="field-wrap">
+            <label class="field-label">LP 回流 lpShare</label>
+            <input type="number" id="newLpShare" class="field-input" min="0" max="10000">
+          </div>
+        </div>
+        <div style="margin-bottom:12px">总和: <span id="shareSumAdmin" style="font-weight:700;color:var(--green)">-</span></div>
+        <button class="btn btn-yellow" onclick="setTaxShare()">💾 保存分配比例</button>
+        ['newMktShare','newBurnShare','newLpShare'].forEach(id => document.getElementById(id) && document.getElementById(id).addEventListener('input', updateShareSumAdmin));
+      </div>
+      <div class="card">
+        <div class="card-title">营销钱包地址</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <input type="text" id="newMktWallet" class="field-input" placeholder="0x...">
+            <div class="field-hint" id="curMktWallet"></div>
+          </div>
+          <button class="btn btn-yellow" onclick="setMarketingWallet()">💾 更新</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Swap Panel -->
+    <div id="panel-swap" class="panel">
+      <div class="panel-title">🔄 Swap 配置</div>
+      <div class="card">
+        <div class="toggle-row">
+          <div><div class="toggle-label">自动 Swap Back</div><div class="toggle-sub">税收累积达阈值时自动兑换分配</div></div>
+          <div class="toggle-btns">
+            <button class="toggle-on" onclick="setSwapEnabled(true)">开启</button>
+            <button class="toggle-off" onclick="setSwapEnabled(false)">关闭</button>
+          </div>
+        </div>
+        <div id="swapStatus" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Swap 阈值</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">新阈值（Token 数量，自动乘 10^18）</label>
+            <input type="number" id="newSwapThreshold" class="field-input" placeholder="e.g. 1000">
+            <div class="field-hint" id="curSwapThreshold"></div>
+          </div>
+          <button class="btn btn-yellow" onclick="setSwapThreshold()">✏️ 设置</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">强制执行 Swap</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:14px">当 taxReserve >= swapThreshold 时才会执行，否则无操作</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-blue" onclick="callMethod('forceSwapBack')">⚡ 立即执行 SwapBack</button>
+        </div>
+        <div id="taxReserveInfo" style="margin-top:10px;font-size:13px;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <!-- Withdraw Panel -->
+    <div id="panel-withdraw" class="panel">
+      <div class="panel-title">💸 资金提取</div>
+      <div class="withdraw-grid" id="withdrawGrid">
+        <div class="w-card">
+          <div class="w-card-title">💛 提取 BNB</div>
+          <div class="w-card-bal" id="contractBNB">- BNB</div>
+          <div class="w-card-hint">合约内全部 BNB 提取到 Owner</div>
+          <button class="btn btn-yellow" onclick="callMethod('withdrawBNB')">💛 提取 BNB</button>
+        </div>
+        <div class="w-card">
+          <div class="w-card-title">💰 提取剩余 Mint 资金</div>
+          <div class="w-card-bal" id="mintRemainFund">- </div>
+          <div class="w-card-hint">Mint 中扣除 LP 部分后的资金（非 LP 资金）</div>
+          <button class="btn btn-yellow" onclick="callMethod('withdrawMintRemainFund')">💰 提取 Mint 资金</button>
+        </div>
+        <div class="w-card">
+          <div class="w-card-title">🪙 提取其他代币</div>
+          <div class="w-card-bal">手动输入</div>
+          <div class="field-wrap" style="margin:10px 0">
+            <input type="text" id="withdrawTokenAddr" class="field-input" placeholder="代币合约地址 0x...">
+          </div>
+          <div class="w-card-hint">不能提取本代币</div>
+          <button class="btn btn-blue" onclick="withdrawToken()">🪙 提取代币</button>
+        </div>
+        <div class="w-card">
+          <div class="w-card-title">💧 提取 LP Token</div>
+          <div class="w-card-bal">手动输入</div>
+          <div class="field-wrap" style="margin:10px 0">
+            <input type="text" id="withdrawLPAddr" class="field-input" placeholder="LP Token 合约地址 0x...">
+          </div>
+          <div class="w-card-hint">LP Token 地址即 pair 地址</div>
+          <button class="btn btn-blue" onclick="withdrawLP()">💧 提取 LP</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LP Panel -->
+    <div id="panel-lp" class="panel">
+      <div class="panel-title">💧 LP 管理</div>
+      <div class="card">
+        <div class="card-title">当前 Pair 信息</div>
+        <div id="pairInfo" style="font-size:13px;color:var(--muted)">加载中...</div>
+      </div>
+      <div class="card">
+        <div class="card-title">强制添加流动性</div>
+        <div class="field-row">
+          <div class="field-wrap">
+            <label class="field-label">代币数量（Token）</label>
+            <input type="number" id="lpTokenAmount" class="field-input" placeholder="e.g. 1000">
+          </div>
+          <div class="field-wrap">
+            <label class="field-label">资金数量（BNB/USDT）</label>
+            <input type="number" id="lpFundAmount" class="field-input" placeholder="e.g. 0.1">
+          </div>
+          <button class="btn btn-blue" onclick="forceAddLiquidity()">💧 添加流动性</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px">
+          ⚠️ 请确保合约内有足够代币和 BNB/USDT，LP 归属 Owner
+        </div>
+      </div>
+    </div>
+
+    <!-- Pause Panel -->
+    <div id="panel-pause" class="panel">
+      <div class="panel-title">⏸️ 暂停 / 恢复</div>
+      <div class="card">
+        <div id="pauseStatus" style="margin-bottom:16px;font-size:14px"></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-yellow" onclick="callMethod('pause')">⏸️ 暂停合约</button>
+          <button class="btn btn-green" onclick="callMethod('unpause')">▶️ 恢复合约</button>
+        </div>
+        <div style="margin-top:12px;font-size:12px;color:var(--muted)">
+          暂停后：mintBNB、mintUSDT、forceSwapBack、forceAddLiquidity 全部禁用
+        </div>
+      </div>
+    </div>
+
+    <!-- Danger Zone -->
+    <div id="panel-danger" class="panel">
+      <div class="panel-title" style="color:var(--red)">⚠️ 危险操作</div>
+      <div class="card danger-zone">
+        <div class="card-title">锁定税率</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:14px">锁定后买卖税率永久不可修改，主网上线后建议执行</div>
+        <button class="btn btn-yellow" onclick="confirmAndCall('lockTax', '确定要永久锁定税率吗？此操作不可撤销！')">🔒 锁定税率</button>
+      </div>
+      <div class="card danger-zone">
+        <div class="card-title">放弃所有权 (renounceOwnership)</div>
+        <div style="color:var(--muted);font-size:13px;margin-bottom:14px">⚠️ 极度危险！放弃后合约将完全去中心化，Owner 函数全部失效</div>
+        <button class="btn btn-red" onclick="confirmAndCall('renounceOwnership', '⚠️ 警告：此操作将永久放弃合约所有权，任何人（包括您）将无法再管理合约。确定要继续吗？')">⚠️ 放弃所有权</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
-const ABI = [
-  {
-    "inputs": [
-      {
-        "internalType": "string",
-        "name": "name_",
-        "type": "string"
-      },
-      {
-        "internalType": "string",
-        "name": "symbol_",
-        "type": "string"
-      },
-      {
-        "internalType": "uint256",
-        "name": "initTotalSupply",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_maxMintSupply",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_mintPrice",
-        "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "_marketingWallet",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_buyTax",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_sellTax",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_taxMarketingRate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_taxDivRate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_taxLpRate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_taxBurnRate",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "constructor"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Approval",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "previousOwner",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "OwnershipTransferred",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "Paused",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "tokenIn",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "bnbOut",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "success",
-        "type": "bool"
-      }
-    ],
-    "name": "TaxSwapAttempted",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "value",
-        "type": "uint256"
-      }
-    ],
-    "name": "Transfer",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": false,
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "Unpaused",
-    "type": "event"
-  },
-  {
-    "inputs": [],
-    "name": "BURN_WALLET",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "ROUTER",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "WBNB",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address[]",
-        "name": "addrs",
-        "type": "address[]"
-      }
-    ],
-    "name": "addWhite",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "owner",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      }
-    ],
-    "name": "allowance",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "approve",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "autoDivSend",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "account",
-        "type": "address"
-      }
-    ],
-    "name": "balanceOf",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "buyTax",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "claimDividend",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "collectLpToken",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "collectMintBNB",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "decimals",
-    "outputs": [
-      {
-        "internalType": "uint8",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "subtractedValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "decreaseAllowance",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "divPoolBNB",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "spender",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "addedValue",
-        "type": "uint256"
-      }
-    ],
-    "name": "increaseAllowance",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "manualOpenPool",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "marketingWallet",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "maxMintSupply",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "minDivHoldAmount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "mint",
-    "outputs": [],
-    "stateMutability": "payable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "mintPrice",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "mintedCount",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "name",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "openMode",
-    "outputs": [
-      {
-        "internalType": "enum FairMintBSC.OpenMode",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "openTime",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "owner",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "pair",
-    "outputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "pauseContract",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "paused",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "addr",
-        "type": "address"
-      }
-    ],
-    "name": "removeWhite",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "renounceOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "rescueBNB",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "token",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "rescueToken",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "router",
-    "outputs": [
-      {
-        "internalType": "contract IPancakeSwapRouter",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "sellTax",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bool",
-        "name": "autoSend",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "minHold",
-        "type": "uint256"
-      }
-    ],
-    "name": "setDivConfig",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "wallet",
-        "type": "address"
-      }
-    ],
-    "name": "setMarketingWallet",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "newPrice",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "newMaxSupply",
-        "type": "uint256"
-      }
-    ],
-    "name": "setMintConfig",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "enum FairMintBSC.OpenMode",
-        "name": "mode",
-        "type": "uint8"
-      }
-    ],
-    "name": "setOpenMode",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "timestamp",
-        "type": "uint256"
-      }
-    ],
-    "name": "setOpenTime",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_buy",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_sell",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "threshold",
-        "type": "uint256"
-      }
-    ],
-    "name": "setTaxConfig",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "mar",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "burn",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "lp",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "div",
-        "type": "uint256"
-      }
-    ],
-    "name": "setTaxRateSplit",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bool",
-        "name": "open",
-        "type": "bool"
-      }
-    ],
-    "name": "setWhiteListSwitch",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "symbol",
-    "outputs": [
-      {
-        "internalType": "string",
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "taxBurnRate",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "taxDivRate",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "taxLpRate",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "taxMarketingRate",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "taxSwapThreshold",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "timerOpenCheck",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "totalSupply",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "transfer",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "from",
-        "type": "address"
-      },
-      {
-        "internalType": "address",
-        "name": "to",
-        "type": "address"
-      },
-      {
-        "internalType": "uint256",
-        "name": "amount",
-        "type": "uint256"
-      }
-    ],
-    "name": "transferFrom",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "newOwner",
-        "type": "address"
-      }
-    ],
-    "name": "transferOwnership",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "triggerTaxSwap",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "unpauseContract",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "userClaimDebt",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "whiteList",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "whitelistOpen",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "stateMutability": "payable",
-    "type": "receive"
-  }
-];
-let provider, signer, contract, userAddr, isOwner = false;
-let taxSwapTimer = null, taxSwapAutoEnabled = false, taxSwapIntervalSec = 300;
+let contractAddr = null;
+let contractInstance = null;
+let contractData = {};
+let isOwner = false;
 
-// ========== 连接钱包 ==========
-async function connectWallet() {
-  if (!window.ethereum) { alert('请安装 MetaMask！'); return; }
-  const accounts = await window.ethereum.request({ method:'eth_requestAccounts' });
-  userAddr = accounts[0];
-  document.getElementById('walletDot').className = 'dot green';
-  document.getElementById('walletAddr').textContent = userAddr.slice(0,6)+'...'+userAddr.slice(-4);
-  document.getElementById('connectBtn').textContent = '已连接';
-  document.getElementById('connectBtn').disabled = true;
-  if (document.getElementById('contractAddr').value.trim()) loadContract();
+const urlParams = new URLSearchParams(location.search);
+const urlContract = urlParams.get('contract');
+const urlChain = urlParams.get('chain');
+
+// ===================== 初始化 =====================
+(async () => {
+  if (window.ethereum) {
+    try {
+      await initWeb3();
+      const accs = await ethRpc('eth_accounts');
+      if (accs[0]) {
+        userAccount = accs[0]; window.currentChainId = await getChainId();
+        document.getElementById('chainSelect').value = window.currentChainId.toString();
+        updateBtnUI(accs[0]);
+      }
+    } catch(e) {}
+  }
+  if (urlChain) { window.currentChainId = parseInt(urlChain); document.getElementById('chainSelect').value = urlChain; }
+  if (urlContract) { document.getElementById('contractAddr').value = urlContract; if (userAccount) loadContract(); }
+  listenWalletEvents(
+    async (acc) => {
+      if(acc) {
+        userAccount=acc; updateBtnUI(acc);
+        if(contractAddr) await refreshAll();
+        else if (urlContract) loadContract();
+      } else {
+        const b = document.getElementById('walletBtn');
+        b.innerHTML='🦊 连接钱包';
+        b.classList.remove('wallet-connected');
+        userAccount = null;
+      }
+    },
+    (chainId) => { window.currentChainId=chainId; document.getElementById('chainSelect').value=chainId.toString(); }
+  );
+})();
+
+// updateBtnUI 由 web3utils.js 提供
+
+async function handleConnect() {
+  const btn = document.getElementById('walletBtn');
+  try { setLoading(btn,true,'连接中...'); const a=await connectWallet(); window.currentChainId=await getChainId(); document.getElementById('chainSelect').value=window.currentChainId.toString(); updateBtnUI(a); if(contractAddr) await refreshAll(); }
+  catch(e) { showToast(e.message,'error'); setLoading(btn,false,'🦊 连接钱包'); }
+}
+async function onChainChange(val) { const c=parseInt(val); if(!userAccount){showToast('请先连接钱包','warning');return;} try{await switchChain(c);window.currentChainId=c;}catch(e){showToast('切链失败','error');} }
+
+// ===================== 合约加载 =====================
+function loadFromHistory() {
+  const chainId = window.currentChainId || 97;
+  const list = getDeployedContracts(chainId);
+  if (!list.length) { showToast('当前链暂无部署记录', 'warning'); return; }
+  const opts = list.slice(0, 5).map(c => `<option value="${c.address}">${c.name} (${shortAddr(c.address)})</option>`).join('');
+  const sel = document.createElement('select');
+  sel.innerHTML = opts;
+  sel.style.cssText = 'position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9999;background:#1e293b;color:#f1f5f9;border:1px solid #1e2d45;padding:12px;border-radius:10px;font-size:14px;min-width:320px';
+  document.body.appendChild(sel);
+  sel.addEventListener('change', () => { document.getElementById('contractAddr').value = sel.value; document.body.removeChild(sel); loadContract(); });
+  sel.addEventListener('blur', () => { try{document.body.removeChild(sel);}catch(e){} });
+  sel.focus();
 }
 
-// ========== 加载合约 ==========
 async function loadContract() {
   const addr = document.getElementById('contractAddr').value.trim();
-  if (!addr) { alert('请输入合约地址'); return; }
-  const ethers = await loadEthers();
-  provider = new ethers.BrowserProvider(window.ethereum);
-  signer = await provider.getSigner();
-  contract = new ethers.Contract(addr, ABI, signer);
-  try {
-    const owner = await contract.owner();
-    isOwner = owner.toLowerCase() === userAddr.toLowerCase();
-    if (!isOwner) {
-      document.getElementById('ownerCheck').innerHTML = '<p style="color:#f85149;">❌ 你不是 Owner，无法使用管理功能</p>';
-      document.getElementById('mainPanel').style.display = 'none';
-      return;
-    }
-    document.getElementById('ownerCheck').innerHTML = '<p style="color:#3fb950;">✅ Owner 验证通过，欢迎使用管理面板</p>';
-    document.getElementById('mainPanel').style.display = 'block';
-    switchTab('dashboard');
-  } catch (e) {
-    document.getElementById('ownerCheck').innerHTML = '<p style="color:#f85149;">加载失败：' + e.message + '</p>';
-  }
+  if (!addr || addr.length !== 42) { showToast('无效地址', 'error'); return; }
+  if (!userAccount) { showToast('请先连接钱包', 'warning'); return; }
+  contractAddr = addr;
+  contractInstance = getContract(addr, CONTRACT_ABI);
+  await refreshAll();
 }
 
-// ========== Tab 切换 ==========
-function switchTab(name) {
-  // 离开税收 Tab 时暂停定时器，进入时恢复
-  if (name !== 'tax' && taxSwapTimer) {
-    clearInterval(taxSwapTimer);
-    taxSwapTimer = null;
-  }
-
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-  const btn = document.getElementById('tab-btn-' + name);
-  if (btn) btn.classList.add('active');
-  document.getElementById('tab-' + name).classList.add('active');
-  if (name === 'dashboard') renderDashboard();
-  if (name === 'mint') renderMintTab();
-  if (name === 'open') renderOpenTab();
-  if (name === 'tax') { renderTaxTab(); if (taxSwapAutoEnabled && !taxSwapTimer) startAutoTaxSwap(); }
-  if (name === 'whitelist') renderWhitelistTab();
-  if (name === 'dividend') renderDividendTab();
-  if (name === 'risk') renderRiskTab();
-}
-
-// ========== Dashboard ==========
-async function renderDashboard() {
-  const el = document.getElementById('tab-dashboard');
-  el.innerHTML = '<p style="color:#8b949e;">加载中...</p>';
+async function refreshAll() {
+  if (!contractInstance) return;
   try {
-    const [name, symbol, totalSupply, minted, maxSupply, price, paused, mode, buyT, sellT, divPool, autoDiv] = await Promise.all([
-      contract.name(), contract.symbol(), contract.totalSupply(), contract.mintedCount(),
-      contract.maxMintSupply(), contract.mintPrice(), contract.paused(), contract.openMode(),
-      contract.buyTax(), contract.sellTax(), contract.divPoolBNB(), contract.autoDivSend()
+    const [owner, name, symbol, totalSupply, mintEnabled, mintedCount, maxMintCount,
+           mintPrice, tokenPerMint, tradingOpen, mintModeRaw, launchModeRaw, launchTime,
+           buyTax, sellTax, transferTax, taxLocked, marketingShare, burnShare, lpShare,
+           marketingWallet, swapEnabled, swapThreshold, pair, paused, mintRemainFund,
+           taxReserve, whitelistEnabled] = await Promise.all([
+      contractInstance.methods.owner().call(),
+      contractInstance.methods.name().call(),
+      contractInstance.methods.symbol().call(),
+      contractInstance.methods.totalSupply().call(),
+      contractInstance.methods.mintEnabled().call(),
+      contractInstance.methods.mintedCount().call(),
+      contractInstance.methods.maxMintCount().call(),
+      contractInstance.methods.mintPrice().call(),
+      contractInstance.methods.tokenPerMint().call(),
+      contractInstance.methods.tradingOpen().call(),
+      contractInstance.methods.mintMode().call(),
+      contractInstance.methods.launchMode().call(),
+      contractInstance.methods.launchTime().call(),
+      contractInstance.methods.buyTax().call(),
+      contractInstance.methods.sellTax().call(),
+      contractInstance.methods.transferTax().call(),
+      contractInstance.methods.taxLocked().call(),
+      contractInstance.methods.marketingShare().call(),
+      contractInstance.methods.burnShare().call(),
+      contractInstance.methods.lpShare().call(),
+      contractInstance.methods.marketingWallet().call(),
+      contractInstance.methods.swapEnabled().call(),
+      contractInstance.methods.swapThreshold().call(),
+      contractInstance.methods.pair().call(),
+      contractInstance.methods.paused().call(),
+      contractInstance.methods.mintRemainFund().call(),
+      contractInstance.methods.taxReserve().call(),
+      contractInstance.methods.whitelistEnabled().call(),
     ]);
-    const modeStr = ['AUTO','MANUAL','TIMER'][Number(mode)];
-    const ethers = await loadEthers();
-    el.innerHTML = `
+
+    isOwner = owner.toLowerCase() === userAccount.toLowerCase();
+    document.getElementById('notOwnerBanner').style.display = isOwner ? 'none' : 'block';
+
+    const modeLabels = ['BNB', 'USDT'];
+    const launchLabels = ['MANUAL', 'TIME', 'AUTO'];
+    const mintMode = parseInt(mintModeRaw);
+    const launchMode = parseInt(launchModeRaw);
+    const chain = getChainConfig(window.currentChainId || 97);
+
+    contractData = { owner, name, symbol, totalSupply, mintEnabled, mintedCount, maxMintCount,
+                     mintPrice, tokenPerMint, tradingOpen, mintMode, launchMode, launchTime,
+                     buyTax, sellTax, transferTax, taxLocked, marketingShare, burnShare, lpShare,
+                     marketingWallet, swapEnabled, swapThreshold, pair, paused, mintRemainFund,
+                     taxReserve, whitelistEnabled, mintModeLabel: modeLabels[mintMode],
+                     launchModeLabel: launchLabels[launchMode] };
+
+    // ---- Overview ----
+    const pct = parseInt(maxMintCount) > 0 ? (parseInt(mintedCount)/parseInt(maxMintCount)*100).toFixed(1) : 0;
+    const contractBNBBal = await getBNBBalance(contractAddr);
+    document.getElementById('overviewContent').innerHTML = `
+      <div class="overview-grid">
+        <div class="ov-card"><div class="ov-val ${tradingOpen?'green':'accent'}">${tradingOpen?'已开盘':'Mint中'}</div><div class="ov-lbl">当前状态</div></div>
+        <div class="ov-card"><div class="ov-val blue">${mintedCount}/${maxMintCount}</div><div class="ov-lbl">Mint 进度 (${pct}%)</div></div>
+        <div class="ov-card"><div class="ov-val accent">${modeLabels[mintMode]}</div><div class="ov-lbl">Mint 模式</div></div>
+        <div class="ov-card"><div class="ov-val ${mintEnabled?'green':'red'}">${mintEnabled?'开放':'关闭'}</div><div class="ov-lbl">Mint 状态</div></div>
+        <div class="ov-card"><div class="ov-val ${paused?'red':'green'}">${paused?'已暂停':'运行中'}</div><div class="ov-lbl">合约状态</div></div>
+        <div class="ov-card"><div class="ov-val accent">${parseFloat(contractBNBBal).toFixed(4)} BNB</div><div class="ov-lbl">合约 BNB 余额</div></div>
+      </div>
       <div class="card">
-        <h2>📊 合约总览</h2>
-        <div class="row"><span class="label">代币</span><span class="value">${name} (${symbol})</span></div>
-        <div class="row"><span class="label">总供应量</span><span class="value">${ethers.formatEther(totalSupply)}</span></div>
-        <div class="row"><span class="label">已铸造</span><span class="value">${minted.toString()} / ${maxSupply.toString()}</span></div>
-        <div class="row"><span class="label">Mint 价格</span><span class="value">${ethers.formatEther(price)} BNB</span></div>
-        <div class="row"><span class="label">状态</span><span class="value">${paused ? '⏸️ 已暂停' : '✅ 运行中'}</span></div>
-        <div class="row"><span class="label">开盘模式</span><span class="value">${modeStr}</span></div>
-        <div class="row"><span class="label">买卖税率</span><span class="value">买入 ${Number(buyT)/10}% / 卖出 ${Number(sellT)/10}%</span></div>
-        <div class="row"><span class="label">分红池 BNB</span><span class="value">${ethers.formatEther(divPool)} BNB</span></div>
-        <div class="row"><span class="label">自动分红</span><span class="value">${autoDiv ? '✅ 开启' : '❌ 关闭'}</span></div>
+        <div class="card-title">详细参数</div>
+        <table class="data-table">
+          <tr><td>合约名称</td><td><strong>${name} (${symbol})</strong></td></tr>
+          <tr><td>Owner</td><td><code>${owner}</code> ${isOwner?'<span style="color:var(--green)">✓ 您</span>':''}</td></tr>
+          <tr><td>合约地址</td><td><code>${contractAddr}</code> <a href="${chain.explorer}/address/${contractAddr}" target="_blank" style="color:var(--accent2);font-size:12px">↗</a></td></tr>
+          <tr><td>总供应量</td><td>${Number(fromWei18(totalSupply)).toLocaleString()} ${symbol}</td></tr>
+          <tr><td>Mint 价格</td><td>${fromWei18(mintPrice)} ${modeLabels[mintMode]}</td></tr>
+          <tr><td>每次 Mint 代币</td><td>${Number(fromWei18(tokenPerMint)).toLocaleString()} ${symbol}</td></tr>
+          <tr><td>开盘模式</td><td>${launchLabels[launchMode]}</td></tr>
+          <tr><td>买税 / 卖税 / 转账税</td><td>${buyTax/100}% / ${sellTax/100}% / ${transferTax/100}% ${taxLocked?'<span style="color:var(--red)">[已锁]</span>':''}</td></tr>
+          <tr><td>税收分配</td><td>营销 ${marketingShare/100}% / 销毁 ${burnShare/100}% / LP ${lpShare/100}%</td></tr>
+          <tr><td>营销钱包</td><td><code>${shortAddr(marketingWallet)}</code></td></tr>
+          <tr><td>交易对 Pair</td><td>${pair === '0x0000000000000000000000000000000000000000' ? '<span style="color:var(--red)">未初始化</span>' : `<code>${shortAddr(pair)}</code>`}</td></tr>
+          <tr><td>Swap 状态</td><td>${swapEnabled?'<span style="color:var(--green)">已启用</span>':'<span style="color:var(--red)">已关闭</span>'} | 阈值: ${Number(fromWei18(swapThreshold)).toLocaleString()} Token</td></tr>
+          <tr><td>税收库存 (taxReserve)</td><td>${Number(fromWei18(taxReserve)).toLocaleString()} ${symbol}</td></tr>
+          <tr><td>白名单模式</td><td>${whitelistEnabled?'<span style="color:var(--accent)">已启用</span>':'关闭'}</td></tr>
+          <tr><td>mintRemainFund</td><td>${fromWei18(mintRemainFund)} ${modeLabels[mintMode]}</td></tr>
+        </table>
       </div>`;
-  } catch (e) {
-    el.innerHTML = '<p style="color:#f85149;">加载失败：' + e.message + '</p>';
-  }
+
+    // ---- Populate other panels ----
+    document.getElementById('tradingStatus').innerHTML = `交易状态: <strong style="color:${tradingOpen?'var(--green)':'var(--red)'}">${tradingOpen?'已开放':'锁定中（Mint阶段）'}</strong>`;
+    document.getElementById('pairStatus').textContent = pair !== '0x0000000000000000000000000000000000000000' ? `✓ Pair: ${pair}` : '⚠️ Pair 未初始化，Mint 前必须先 initPair';
+    document.getElementById('pauseStatus').innerHTML = `合约状态: <strong style="color:${paused?'var(--red)':'var(--green)'}">${paused?'已暂停':'运行中'}</strong>`;
+    document.getElementById('wlCurrentStatus').textContent = `白名单模式: ${whitelistEnabled ? '已启用' : '已关闭'}`;
+    document.getElementById('swapStatus').textContent = `Swap 状态: ${swapEnabled ? '已启用' : '已关闭'}`;
+    document.getElementById('curBuyTax').textContent = `当前: ${buyTax/100}%`;
+    document.getElementById('curSellTax').textContent = `当前: ${sellTax/100}%`;
+    document.getElementById('curTransferTax').textContent = `当前: ${transferTax/100}%`;
+    document.getElementById('curMktWallet').textContent = `当前: ${marketingWallet}`;
+    document.getElementById('curSwapThreshold').textContent = `当前: ${Number(fromWei18(swapThreshold)).toLocaleString()} Token`;
+    document.getElementById('taxReserveInfo').textContent = `taxReserve: ${Number(fromWei18(taxReserve)).toLocaleString()} Token | threshold: ${Number(fromWei18(swapThreshold)).toLocaleString()} Token`;
+    document.getElementById('currentMintPrice').textContent = `当前: ${fromWei18(mintPrice)} ${modeLabels[mintMode]}`;
+    document.getElementById('currentTokenPerMint').textContent = `当前: ${Number(fromWei18(tokenPerMint)).toLocaleString()} Token`;
+    document.getElementById('currentMaxMintCount').textContent = `当前: ${maxMintCount}`;
+    document.getElementById('newBuyTax').value = buyTax;
+    document.getElementById('newSellTax').value = sellTax;
+    document.getElementById('newTransferTax').value = transferTax;
+    document.getElementById('newMktShare').value = marketingShare;
+    document.getElementById('newBurnShare').value = burnShare;
+    document.getElementById('newLpShare').value = lpShare;
+    document.getElementById('newMktWallet').value = marketingWallet;
+    document.getElementById('newSwapThreshold').value = Number(fromWei18(swapThreshold));
+    updateShareSumAdmin();
+    if (taxLocked) { document.getElementById('taxLockedBanner').style.display = 'block'; }
+    document.getElementById('contractBNBBal') && (document.getElementById('contractBNBBal') ? document.getElementById('contractBNBBal').textContent = parseFloat(contractBNBBal).toFixed(4) + ' BNB' : null);
+    document.getElementById('contractBNB').textContent = parseFloat(contractBNBBal).toFixed(4) + ' BNB';
+    document.getElementById('mintRemainFund').textContent = `${fromWei18(mintRemainFund)} ${modeLabels[mintMode]}`;
+    document.getElementById('pairInfo').innerHTML = pair !== '0x0000000000000000000000000000000000000000'
+      ? `Pair 地址: <code>${pair}</code> <a href="${chain.explorer}/address/${pair}" target="_blank" style="color:var(--accent2)">↗</a><br>
+         <span style="color:var(--muted);font-size:12px;margin-top:4px;display:block">LP Token 地址即 Pair 地址，可用于提取 LP</span>`
+      : '<span style="color:var(--red)">Pair 未初始化，请先执行 initPair</span>';
+
+    if (document.getElementById('withdrawLPAddr') && pair !== '0x0000000000000000000000000000000000000000') {
+      document.getElementById('withdrawLPAddr').placeholder = pair;
+    }
+
+  } catch(e) { showToast('加载失败: ' + e.message, 'error'); console.error(e); }
 }
 
-// ========== Mint 配置 ==========
-function renderMintTab() {
-  document.getElementById('tab-mint').innerHTML = `
-    <div class="card">
-      <h2>🎯 Mint 参数配置</h2>
-      <div class="grid2">
-        <div class="input-group"><label>新 Mint 价格（BNB）</label><input type="number" id="newPrice" step="0.01" placeholder="0.01" /></div>
-        <div class="input-group"><label>新最大铸造份数</label><input type="number" id="newMaxSupply" placeholder="1000" /></div>
-      </div>
-      <button class="btn-action" onclick="setMintConfig()">更新 Mint 配置</button>
-      <div id="mintStatus" class="status-msg"></div>
-    </div>`;
+function updateShareSumAdmin() {
+  const m = parseInt(document.getElementById('newMktShare')?.value) || 0;
+  const b = parseInt(document.getElementById('newBurnShare')?.value) || 0;
+  const l = parseInt(document.getElementById('newLpShare')?.value) || 0;
+  const s = document.getElementById('shareSumAdmin');
+  if (s) { s.textContent = (m+b+l); s.style.color = (m+b+l===10000) ? 'var(--green)' : 'var(--red)'; }
 }
 
-async function setMintConfig() {
-  const ethers = await loadEthers();
-  const price = document.getElementById('newPrice').value;
-  const max = document.getElementById('newMaxSupply').value;
-  if (!price || !max) { alert('请填写完整'); return; }
-  showMsg('mintStatus','发送中...','info','tab-mint');
+// ===================== 面板切换 =====================
+function showPanel(name) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('panel-' + name)?.classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ===================== 通用方法调用 =====================
+async function callMethod(method, extraArgs = [], value = '0') {
+  if (!contractInstance || !userAccount) { showToast('请加载合约并连接钱包', 'warning'); return; }
+  if (!isOwner) { showToast('非 Owner，无法执行', 'error'); return; }
   try {
-    const tx = await contract.setMintConfig(ethers.parseEther(price), max);
-    await tx.wait();
-    showMsg('mintStatus','✅ 更新成功','ok','tab-mint');
-  } catch (e) { showMsg('mintStatus','失败：'+(e.reason||e.message),'err','tab-mint'); }
-}
-
-// ========== 开盘控制 ==========
-function renderOpenTab() {
-  document.getElementById('tab-open').innerHTML = `
-    <div class="card">
-      <h2>🚀 开盘模式</h2>
-      <div class="grid3">
-        <button class="btn-action primary" onclick="setOpenMode(0)">AUTO 自动开盘</button>
-        <button class="btn-action warn" onclick="setOpenMode(1)">MANUAL 手动开盘</button>
-        <button class="btn-action" onclick="setOpenMode(2)" style="background:#21262d;color:#e0e0e0;border:1px solid #30363d;">TIMER 定时开盘</button>
-      </div>
-      <div id="timerSection" style="margin-top:16px;display:none;">
-        <div class="input-group"><label>开盘时间戳（Unix 秒）</label><input type="number" id="openTimeInput" placeholder="1710000000" /></div>
-        <button class="btn-action primary" onclick="setOpenTime()">设置开盘时间</button>
-      </div>
-      <div style="margin-top:16px;">
-        <button class="btn-action warn" onclick="manualOpenPool()">手动执行开盘（需 Mint 结束 + MANUAL 模式）</button>
-      </div>
-      <div id="openStatus" class="status-msg"></div>
-    </div>`;
-}
-
-async function setOpenMode(mode) {
-  await contract.setOpenMode(mode);
-  showMsg('openStatus','✅ 开盘模式已更新','ok','tab-open');
-  if (mode === 2) document.getElementById('timerSection').style.display = 'block';
-  else document.getElementById('timerSection').style.display = 'none';
-}
-
-async function setOpenTime() {
-  const t = document.getElementById('openTimeInput').value;
-  if (!t) return;
-  await contract.setOpenTime(t);
-  showMsg('openStatus','✅ 开盘时间已设置','ok','tab-open');
-}
-
-async function manualOpenPool() {
-  showMsg('openStatus','发送中...','info','tab-open');
-  try {
-    const tx = await contract.manualOpenPool();
-    await tx.wait();
-    showMsg('openStatus','✅ 开盘成功，流动性已添加','ok','tab-open');
-  } catch (e) { showMsg('openStatus','失败：'+(e.reason||e.message),'err','tab-open'); }
-}
-
-// ========== 税收配置 ==========
-function renderTaxTab() {
-  document.getElementById('tab-tax').innerHTML = `
-    <div class="card">
-      <h2>💰 买卖税率（千分比）</h2>
-      <div class="grid3">
-        <div class="input-group"><label>买入税（‰，50=5%）</label><input type="number" id="buyTaxInput" placeholder="50" /></div>
-        <div class="input-group"><label>卖出税（‰，50=5%）</label><input type="number" id="sellTaxInput" placeholder="50" /></div>
-        <div class="input-group"><label>税收归集阈值（代币数）</label><input type="text" id="taxThresholdInput" placeholder="1000000000000000000" /></div>
-      </div>
-      <button class="btn-action" onclick="setTaxConfig()">更新税率</button>
-    </div>
-    <div class="card">
-      <h2>💸 税收 BNB 分配比例（总和=1000）</h2>
-      <div class="grid2">
-        <div class="input-group"><label>营销钱包</label><input type="text" id="marketingWalletInput" placeholder="0x..." /></div>
-      </div>
-      <div class="grid3">
-        <div class="input-group"><label>营销比例 ‰</label><input type="number" id="rateMar" placeholder="400" /></div>
-        <div class="input-group"><label>销毁比例 ‰</label><input type="number" id="rateBurn" placeholder="100" /></div>
-        <div class="input-group"><label>LP 比例 ‰</label><input type="number" id="rateLp" placeholder="200" /></div>
-      </div>
-      <div class="input-group"><label>分红比例 ‰（自动=1000-其他）</label><input type="number" id="rateDiv" placeholder="300" disabled style="background:#21262d;cursor:not-allowed;" /></div>
-      <button class="btn-action" onclick="setTaxRateSplit()">更新分配比例</button>
-      <div id="taxStatus" class="status-msg"></div>
-    </div>
-    <div class="card">
-      <h2>🔄 税收代币兑换</h2>
-      <p style="color:#8b949e;margin-bottom:8px;">手动或自动将税收代币换成 BNB 并分配</p>
-      <div id="taxTokenInfo" style="color:#f0883e;margin-bottom:8px;font-size:14px;">加载中...</div>
-      <div id="poolStatus" style="margin-bottom:12px;font-size:13px;"></div>
-
-      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
-        <button class="btn-action primary" id="btnTaxSwap" onclick="triggerTaxSwap()">⚡ 立即兑换</button>
-        <label style="display:flex;align-items:center;gap:6px;color:#e0e0e0;font-size:0.85rem;cursor:pointer;user-select:none;">
-          <input type="checkbox" id="autoTaxSwapToggle" onchange="toggleAutoTaxSwap()" style="accent-color:#3fb950;" />
-          自动兑换
-        </label>
-        <select id="autoTaxSwapInterval" onchange="changeTaxSwapInterval()" style="background:#161b22;border:1px solid #30363d;border-radius:6px;padding:6px 10px;color:#e0e0e0;font-size:0.85rem;">
-          <option value="60">每 1 分钟</option>
-          <option value="180">每 3 分钟</option>
-          <option value="300" selected>每 5 分钟</option>
-          <option value="900">每 15 分钟</option>
-          <option value="1800">每 30 分钟</option>
-        </select>
-        <span id="autoTaxSwapStatus" style="font-size:0.8rem;color:#8b949e;"></span>
-      </div>
-      <div id="taxSwapStatus" class="status-msg"></div>
-    </div>`;
-  updateTaxTokenInfo();
-}
-
-async function setTaxConfig() {
-  const ethers = await loadEthers();
-  const buy = document.getElementById('buyTaxInput').value;
-  const sell = document.getElementById('sellTaxInput').value;
-  const threshold = document.getElementById('taxThresholdInput').value;
-  if (!buy || !sell) return;
-  const tx = await contract.setTaxConfig(buy, sell, threshold ? ethers.parseEther(threshold) : 0);
-  await tx.wait();
-  showMsg('taxStatus','✅ 税率已更新','ok','tab-tax');
-}
-
-async function setTaxRateSplit() {
-  const ethers = await loadEthers();
-  const mar = Number(document.getElementById('rateMar').value);
-  const burn = Number(document.getElementById('rateBurn').value);
-  const lp = Number(document.getElementById('rateLp').value);
-  const div = 1000 - mar - burn - lp;
-  if (mar + burn + lp + div !== 1000) { alert('总和必须为1000'); return; }
-  const tx = await contract.setTaxRateSplit(mar, burn, lp, div);
-  await tx.wait();
-  showMsg('taxStatus','✅ 分配比例已更新（分红='+div+'‰）','ok','tab-tax');
-}
-
-async function triggerTaxSwap() {
-  const ethers = await loadEthers();
-  if (!contract) return alert('请先加载合约');
-  try {
-    const tx = await contract.triggerTaxSwap();
-    showMsg('taxSwapStatus','⏳ 交易已提交，等待确认...','pending','tab-tax');
-    await tx.wait();
-    showMsg('taxSwapStatus','✅ 税收代币已兑换并分配完成！','ok','tab-tax');
-    updateTaxTokenInfo();
+    showToast('交易发送中，请确认 MetaMask...', 'info', 3000);
+    const tx = contractInstance.methods[method](...extraArgs);
+    const opts = { from: userAccount };
+    if (value !== '0') opts.value = value;
+    await tx.send(opts);
+    showToast(`✅ ${method} 执行成功`, 'success');
+    await refreshAll();
   } catch(e) {
-    showMsg('taxSwapStatus','❌ 兑换失败：'+(e.reason||e.message),'error','tab-tax');
+    showToast(`失败: ${e.message?.slice(0,120) || e}`, 'error', 8000);
   }
 }
 
-async function updateTaxTokenInfo() {
-  try {
-    const ethers = await loadEthers();
-    const [balance, threshold, pairAddr] = await Promise.all([
-      contract.balanceOf(contract.target),
-      contract.taxSwapThreshold(),
-      contract.pair()
-    ]);
-    const fmt = ethers.formatEther(balance);
-    const tfmt = ethers.formatEther(threshold);
-    document.getElementById('taxTokenInfo').textContent =
-      '合约持有代币：'+Number(fmt).toFixed(4)+' / 阈值：'+Number(tfmt).toFixed(4)+
-      (balance >= threshold ? ' ✅ 已达阈值' : ' ⏳ 未达阈值');
-
-    // 池子状态
-    const poolDiv = document.getElementById('poolStatus');
-    const btnSwap = document.getElementById('btnTaxSwap');
-    if (pairAddr === '0x0000000000000000000000000000000000000000') {
-      poolDiv.innerHTML = '<span style="color:#f85149;">⚠️ 交易对未创建，税收兑换不可用。<br>请先在「开盘管理」Tab 中创建交易对（开盘加池）。</span>';
-      if (btnSwap) { btnSwap.disabled = true; btnSwap.style.opacity = '0.5'; btnSwap.style.cursor = 'not-allowed'; }
-    } else {
-      poolDiv.innerHTML = '<span style="color:#3fb950;">✅ 交易对已创建：' + pairAddr.slice(0,6) + '...' + pairAddr.slice(-4) + '</span>';
-      if (btnSwap) { btnSwap.disabled = false; btnSwap.style.opacity = '1'; btnSwap.style.cursor = 'pointer'; }
-    }
-  } catch(e) { document.getElementById('taxTokenInfo').textContent = '加载失败'; }
+async function confirmAndCall(method, msg) {
+  if (!confirm(msg)) return;
+  await callMethod(method);
 }
 
-// ========== 自动税收兑换定时器 ==========
-function toggleAutoTaxSwap() {
-  const toggle = document.getElementById('autoTaxSwapToggle');
-  if (toggle.checked) {
-    startAutoTaxSwap();
-  } else {
-    stopAutoTaxSwap();
-  }
+// ===================== 具体操作 =====================
+async function setLaunchTime() {
+  const dt = document.getElementById('newLaunchTime').value;
+  if (!dt) { showToast('请选择时间', 'warning'); return; }
+  const ts = Math.floor(new Date(dt).getTime() / 1000);
+  await callMethod('setLaunchTime', [ts.toString()]);
 }
 
-function changeTaxSwapInterval() {
-  taxSwapIntervalSec = parseInt(document.getElementById('autoTaxSwapInterval').value);
-  if (taxSwapAutoEnabled) {
-    // 重启定时器使新间隔生效
-    stopAutoTaxSwap();
-    startAutoTaxSwap();
-  }
+async function setMintPrice() {
+  const v = document.getElementById('newMintPrice').value;
+  if (!v) return;
+  await callMethod('setMintPrice', [toWei18(v)]);
 }
 
-function startAutoTaxSwap() {
-  taxSwapAutoEnabled = true;
-  document.getElementById('autoTaxSwapToggle').checked = true;
-  document.getElementById('autoTaxSwapStatus').textContent = '⏳ 自动兑换运行中（间隔 '+Math.floor(taxSwapIntervalSec/60)+' 分钟）';
-  document.getElementById('autoTaxSwapStatus').style.color = '#3fb950';
-
-  if (taxSwapTimer) clearInterval(taxSwapTimer);
-  taxSwapTimer = setInterval(async () => {
-    if (!contract || !taxSwapAutoEnabled) return;
-    try {
-      const [balance, threshold, pairAddr] = await Promise.all([
-        contract.balanceOf(contract.target),
-        contract.taxSwapThreshold(),
-        contract.pair()
-      ]);
-      if (pairAddr === '0x0000000000000000000000000000000000000000') return;
-      if (balance < threshold) return;
-
-      const tx = await contract.triggerTaxSwap();
-      await tx.wait();
-      updateTaxTokenInfo();
-    } catch(e) {
-      // 静默失败，下次重试
-    }
-  }, taxSwapIntervalSec * 1000);
+async function setTokenPerMint() {
+  const v = document.getElementById('newTokenPerMint').value;
+  if (!v) return;
+  await callMethod('setTokenPerMint', [toWei18(v)]);
 }
 
-function stopAutoTaxSwap() {
-  taxSwapAutoEnabled = false;
-  document.getElementById('autoTaxSwapToggle').checked = false;
-  document.getElementById('autoTaxSwapStatus').textContent = '⏸️ 自动兑换已关闭';
-  document.getElementById('autoTaxSwapStatus').style.color = '#8b949e';
-  if (taxSwapTimer) { clearInterval(taxSwapTimer); taxSwapTimer = null; }
+async function setMaxMintCount() {
+  const v = document.getElementById('newMaxMintCount').value;
+  if (!v) return;
+  await callMethod('setMaxMintCount', [v]);
 }
 
-// ========== 白名单 ==========
-function renderWhitelistTab() {
-  document.getElementById('tab-whitelist').innerHTML = `
-    <div class="card">
-      <h2>📋 白名单管理</h2>
-      <div style="margin-bottom:12px;">
-        <button class="btn-small" onclick="toggleWhitelist()" style="background:#21262d;color:#e0e0e0;border:1px solid #30363d;">切换白名单开关</button>
-        <span style="color:#8b949e;font-size:0.85rem;margin-left:8px;" id="wlStatusText">加载中...</span>
-      </div>
-      <div class="input-group"><label>批量添加地址（每行一个或逗号分隔）</label><textarea id="wlAddresses" rows="4" style="width:100%;background:#0d1117;border:1px solid #30363d;border-radius:6px;padding:10px;color:#e0e0e0;font-size:0.9rem;"></textarea></div>
-      <button class="btn-action primary" onclick="addWhitelist()">批量添加白名单</button>
-      <div id="wlStatus" class="status-msg"></div>
-    </div>`;
-  updateWLStatus();
+async function setWhitelistStatus(enable) {
+  await callMethod('setWhitelistStatus', [enable]);
 }
 
-async function updateWLStatus() {
-  try {
-    const open = await contract.whitelistOpen();
-    document.getElementById('wlStatusText').textContent = open ? '✅ 白名单已开启' : '❌ 白名单已关闭';
-  } catch {}
-}
-
-async function toggleWhitelist() {
-  const open = await contract.whitelistOpen();
-  await contract.setWhiteListSwitch(!open);
-  updateWLStatus();
+function parseAddresses(textareaId) {
+  return document.getElementById(textareaId).value.split('\n').map(s => s.trim()).filter(s => s.startsWith('0x') && s.length === 42);
 }
 
 async function addWhitelist() {
-  const raw = document.getElementById('wlAddresses').value.trim();
-  const addrs = raw.split(/[\n,\s]+/).filter(a => a.startsWith('0x'));
-  if (addrs.length === 0) { alert('请输入有效地址'); return; }
-  showMsg('wlStatus','发送中...','info','tab-whitelist');
-  try {
-    const tx = await contract.addWhite(addrs);
-    await tx.wait();
-    showMsg('wlStatus','✅ 已添加 '+addrs.length+' 个地址','ok','tab-whitelist');
-  } catch (e) { showMsg('wlStatus','失败：'+(e.reason||e.message),'err','tab-whitelist'); }
+  const addrs = parseAddresses('wlAddresses');
+  if (!addrs.length) { showToast('请输入有效地址', 'error'); return; }
+  await callMethod('setWhitelist', [addrs]);
 }
 
-// ========== 分红 ==========
-async function renderDividendTab() {
-  document.getElementById('tab-dividend').innerHTML = '<p style="color:#8b949e;">加载中...</p>';
-  try {
-    const ethers = await loadEthers();
-    const [autoDiv, minHold, divPool, totalSupply, pairAddr, burnAddr] = await Promise.all([
-      contract.autoDivSend(),
-      contract.minDivHoldAmount(),
-      contract.divPoolBNB(),
-      contract.totalSupply(),
-      contract.pair(),
-      contract.BURN_WALLET()
-    ]);
-    const circ = totalSupply - (await contract.balanceOf(pairAddr)) - (await contract.balanceOf(burnAddr));
-    const minHoldFmt = ethers.formatEther(minHold);
-    const circFmt = ethers.formatEther(circ);
-    const divPoolFmt = ethers.formatEther(divPool);
-    const autoStr = autoDiv ? '<span style="color:#3fb950;">✅ 自动分红已开启</span>' : '<span style="color:#f0883e;">⚠️ 自动分红已关闭（需手动领取）</span>';
-    const autoDivHint = autoDiv
-      ? '每次转账时自动向交易双方派发分红 BNB'
-      : '关闭时用户需在 Mint 页面手动调用 claimDividend() 领取分红';
-
-    document.getElementById('tab-dividend').innerHTML = `
-      <div class="card">
-        <h2>🎁 分红状态</h2>
-        <div class="row"><span class="label">分红池 BNB</span><span class="value">${Number(divPoolFmt).toFixed(6)} BNB</span></div>
-        <div class="row"><span class="label">流通量（不含池子+黑洞）</span><span class="value">${Number(circFmt).toFixed(4)}</span></div>
-        <div class="row"><span class="label">最低持币门槛</span><span class="value">${Number(minHoldFmt).toFixed(4)}</span></div>
-        <div class="row"><span class="label">自动分红</span><span class="value">${autoStr}</span></div>
-        <div style="color:#8b949e;font-size:0.8rem;margin-top:4px;">${autoDivHint}</div>
-      </div>
-      <div class="card">
-        <h2>⚙️ 分红配置</h2>
-        <div style="margin-bottom:12px;">
-          <label style="color:#8b949e;font-size:0.85rem;">自动分红开关</label>
-          <div style="margin-top:6px;">
-            <button class="btn-small" onclick="setAutoDiv(true)" style="background:#238636;color:#fff;margin-right:8px;">开启自动</button>
-            <button class="btn-small" onclick="setAutoDiv(false)" style="background:#21262d;color:#e0e0e0;border:1px solid #30363d;">关闭自动</button>
-          </div>
-        </div>
-        <div class="input-group"><label>最低持币分红门槛（代币单位）</label><input type="text" id="minHoldInput" value="${minHold.toString()}" /></div>
-        <button class="btn-action" onclick="setDivConfig()">更新分红配置</button>
-        <hr style="border-color:#21262d;margin:16px 0;" />
-        <button class="btn-action primary" onclick="claimDiv()">🎁 领取我的分红</button>
-        <div id="divStatus" class="status-msg"></div>
-      </div>`;
-  } catch (e) {
-    document.getElementById('tab-dividend').innerHTML = '<p style="color:#f85149;">加载失败：' + e.message + '</p>';
-  }
+async function setBlacklist(status) {
+  const addrs = parseAddresses('blAddresses');
+  if (!addrs.length) { showToast('请输入有效地址', 'error'); return; }
+  await callMethod('setBlacklist', [addrs, status]);
 }
 
-async function setAutoDiv(auto) {
-  const ethers = await loadEthers();
-  const minHold = document.getElementById('minHoldInput').value;
-  await contract.setDivConfig(auto, minHold ? minHold : 0);
-  renderDividendTab();
+async function checkWhitelist() {
+  const addr = document.getElementById('checkWlAddr').value.trim();
+  if (!addr) return;
+  const res = await contractInstance.methods.whitelist(addr).call();
+  document.getElementById('wlQueryResult').innerHTML = `<span style="color:${res?'var(--green)':'var(--red)'}">${addr}: ${res ? '✓ 在白名单' : '✗ 不在白名单'}</span>`;
 }
 
-async function claimDiv() {
-  showMsg('divStatus','发送中...','info','tab-dividend');
-  try {
-    const tx = await contract.claimDividend();
-    await tx.wait();
-    showMsg('divStatus','✅ 分红领取成功','ok','tab-dividend');
-  } catch (e) { showMsg('divStatus','失败：'+(e.reason||e.message),'err','tab-dividend'); }
+async function checkBlacklist() {
+  const addr = document.getElementById('checkBlAddr').value.trim();
+  if (!addr) return;
+  const res = await contractInstance.methods.blacklist(addr).call();
+  document.getElementById('blQueryResult').innerHTML = `<span style="color:${res?'var(--red)':'var(--green)'}">${addr}: ${res ? '⛔ 在黑名单' : '✓ 未被拉黑'}</span>`;
 }
 
-// ========== 风控 ==========
-function renderRiskTab() {
-  document.getElementById('tab-risk').innerHTML = `
-    <div class="card">
-      <h2>🛡️ 合约暂停/恢复</h2>
-      <button class="btn-action warn" onclick="pauseContract()" style="margin-right:8px;">暂停合约</button>
-      <button class="btn-action" onclick="unpauseContract()" style="background:#238636;">恢复合约</button>
-    </div>
-    <div class="card">
-      <h2>🚨 紧急提币</h2>
-      <p style="color:#f85149;font-size:0.85rem;margin-bottom:12px;">⚠️ 警告：仅限紧急情况，提取合约内闲置 BNB/代币</p>
-      <button class="btn-action danger" onclick="rescueBNB()">提取合约 BNB（不含分红池）</button>
-      <div id="riskStatus" class="status-msg"></div>
-    </div>
-    <div class="card">
-      <h2>💰 提取任意代币</h2>
-      <p style="color:#f0b90b;font-size:0.85rem;margin-bottom:12px;">提取误转入合约或合约持有的任意 ERC20 代币（含本币）</p>
-      <div class="input-group">
-        <label>代币合约地址</label>
-        <input id="rescueTokenAddr" type="text" placeholder="0x..." />
-      </div>
-      <div class="input-group">
-        <label>提取数量（原始单位）</label>
-        <input id="rescueTokenAmt" type="text" placeholder="1000000000000000000" />
-      </div>
-      <button class="btn-action danger" onclick="rescueToken()">提取代币</button>
-      <div id="rescueTokenStatus" class="status-msg"></div>
-    </div>`;
+async function setBuyTax() { const v=document.getElementById('newBuyTax').value; if(!v)return; await callMethod('setBuyTax',[v]); }
+async function setSellTax() { const v=document.getElementById('newSellTax').value; if(!v)return; await callMethod('setSellTax',[v]); }
+async function setTransferTax() { const v=document.getElementById('newTransferTax').value; if(!v)return; await callMethod('setTransferTax',[v]); }
+
+async function setTaxShare() {
+  const m=document.getElementById('newMktShare').value, b=document.getElementById('newBurnShare').value, l=document.getElementById('newLpShare').value;
+  if (parseInt(m)+parseInt(b)+parseInt(l) !== 10000) { showToast('三项之和必须等于 10000', 'error'); return; }
+  await callMethod('setTaxShare', [m, b, l]);
 }
 
-async function pauseContract() { await contract.pauseContract(); alert('已暂停'); }
-async function unpauseContract() { await contract.unpauseContract(); alert('已恢复'); }
-async function rescueBNB() {
-  if (!confirm('确认提取合约 BNB？')) return;
-  const tx = await contract.rescueBNB();
-  await tx.wait();
-  showMsg('riskStatus','✅ 提取成功','ok','tab-risk');
+async function setMarketingWallet() { const v=document.getElementById('newMktWallet').value.trim(); if(!v)return; await callMethod('setMarketingWallet',[v]); }
+
+async function setSwapEnabled(enable) { await callMethod('setSwapEnabled', [enable]); }
+async function setSwapThreshold() { const v=document.getElementById('newSwapThreshold').value; if(!v)return; await callMethod('setSwapThreshold',[toWei18(v)]); }
+
+async function withdrawToken() {
+  const addr = document.getElementById('withdrawTokenAddr').value.trim();
+  if (!addr) { showToast('请输入代币合约地址', 'warning'); return; }
+  await callMethod('withdrawToken', [addr]);
 }
-async function rescueToken() {
-  const addr = document.getElementById('rescueTokenAddr').value.trim();
-  const amt = document.getElementById('rescueTokenAmt').value.trim();
-  if (!addr || !amt) { showMsg('rescueTokenStatus','请填写代币地址和数量','err','tab-risk'); return; }
-  if (!confirm('确认提取 ' + amt + ' 个代币？(' + addr + ')')) return;
-  const tx = await contract.rescueToken(addr, amt);
-  await tx.wait();
-  showMsg('rescueTokenStatus','✅ 代币提取成功','ok','tab-risk');
-  showMsg('riskStatus','','','tab-risk');
+async function withdrawLP() {
+  const addr = document.getElementById('withdrawLPAddr').value.trim() || contractData.pair;
+  if (!addr) { showToast('请输入 LP Token 地址', 'warning'); return; }
+  await callMethod('withdrawLP', [addr]);
 }
 
-// ========== 工具函数 ==========
-function showMsg(id, msg, type, tabId) {
-  const el = document.getElementById(id) || (tabId ? document.querySelector('#'+tabId+' .status-msg') : null);
-  if (!el) return;
-  el.innerHTML = msg;
-  el.className = 'status-msg ' + type;
+async function forceAddLiquidity() {
+  const t = document.getElementById('lpTokenAmount').value;
+  const f = document.getElementById('lpFundAmount').value;
+  if (!t || !f) { showToast('请填写数量', 'warning'); return; }
+  await callMethod('forceAddLiquidity', [toWei18(t), toWei18(f)]);
 }
 
-function loadEthers() {
-  return new Promise((resolve, reject) => {
-    if (window.ethers) { resolve(window.ethers); return; }
-    const s = document.createElement('script');
-    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/ethers/6.9.0/ethers.umd.min.js';
-    s.onload = () => resolve(window.ethers);
-    s.onerror = reject;
-    document.head.appendChild(s);
+// Listen for events on share inputs
+document.addEventListener('DOMContentLoaded', () => {
+  ['newMktShare','newBurnShare','newLpShare'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener('input', updateShareSumAdmin);
   });
-}
-
-if (window.ethereum) {
-  window.ethereum.on('accountsChanged', (accs) => { userAddr = accs[0]||null; if(contract) loadContract(); });
-}
-
-// ===== 从 URL 参数自动填入合约地址 =====
-(function autoFillFromUrl() {
-  const p = new URLSearchParams(location.search);
-  const addr = p.get('contract');
-  if (addr && addr.startsWith('0x')) {
-    document.getElementById('contractAddr').value = addr;
-  }
-})();
+});
 </script>
 </body>
 </html>
